@@ -129,7 +129,7 @@ Resources:
         - email
       UsernameAttributes:
         - email
-      MfaConfiguration: OFF                  # ← Must be OFF, ON, or OPTIONAL (not `false`)
+      MfaConfiguration: "OFF"                  # ← Must be OFF, ON, or OPTIONAL (not `false`)
       Policies:
         PasswordPolicy:
           MinimumLength: 8
