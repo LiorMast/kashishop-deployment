@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Full-stack deployment for Kashishop (core infrastructure):
   • Hosts frontend in S3
-  • Creates DynamoDB tables
+  • Creates DynamoDB tables (Items, TransactionHistory, Users) per JSON spec
   • Configures Cognito (User Pool, Client, Identity Pool, Admins group)
 
 Parameters:
@@ -19,10 +19,9 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${EnvPrefix}-kashishop-frontend"
+      AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
-        ErrorDocument: error.html
-      AccessControl: PublicRead
     DeletionPolicy: Retain
 
   FrontendBucketPolicy:
@@ -32,11 +31,17 @@ Resources:
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
-          - Sid: AllowPublicRead
+          - Sid: PublicReadGetObject
             Effect: Allow
-            Principal: '*'
+            Principal: "*"
             Action: s3:GetObject
-            Resource: !Sub 'arn:aws:s3:::${EnvPrefix}-kashishop-frontend/*'
+            Resource: !Sub "${FrontendBucket.Arn}/*"
+
+  FrontendDeployment:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${EnvPrefix}-kashishop-frontend-deployment"
+    DeletionPolicy: Retain
 
   ########################################
   # 2) DynamoDB Tables                  #
@@ -114,12 +119,19 @@ Resources:
         - AttributeName: username
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: userID-index
+          KeySchema:
+            - AttributeName: userID
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
       SSESpecification:
         SSEEnabled: true
     DeletionPolicy: Retain
 
   ########################################
-  # 3) Cognito User Pool + Client + Group#
+  # 3) Cognito User Pool and Identity   #
   ########################################
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -129,7 +141,7 @@ Resources:
         - email
       UsernameAttributes:
         - email
-      MfaConfiguration: "OFF"                  # ← Must be OFF, ON, or OPTIONAL (not `false`)
+      MfaConfiguration: "OFF"
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -138,24 +150,7 @@ Resources:
           RequireNumbers: true
           RequireSymbols: true
           TemporaryPasswordValidityDays: 7
-      Schema:
-        - Name: sub
-          AttributeDataType: String
-          Mutable: false
-          Required: true
-        - Name: email
-          AttributeDataType: String
-          Mutable: true
-          Required: true
-        - Name: phone_number
-          AttributeDataType: String
-          Mutable: true
-          Required: true
-        - Name: address
-          AttributeDataType: String
-          Mutable: true
-          Required: true
-      UserPoolTags: {}                        # (no tags)
+      UserPoolTags: {}
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -174,7 +169,7 @@ Resources:
       GroupName: Admins
       UserPoolId: !Ref CognitoUserPool
       Description: "Administrators group"
-      RoleArn: arn:aws:iam::530368666823:role/AdminsRole  # ← Make sure this role actually exists
+      RoleArn: arn:aws:iam::530368666823:role/AdminsRole
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
