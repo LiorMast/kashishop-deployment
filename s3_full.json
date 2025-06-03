@@ -1,0 +1,58 @@
+[
+  {
+  "bucketName": "kashishop2",
+  "location": {
+    "LocationConstraint": null
+  },
+  "versioning": {},
+  "encryption": {
+    "ServerSideEncryptionConfiguration": {
+      "Rules": [
+        {
+          "ApplyServerSideEncryptionByDefault": {
+            "SSEAlgorithm": "AES256"
+          },
+          "BucketKeyEnabled": false
+        }
+      ]
+    }
+  },
+  "lifecycleConfiguration": {},
+  "tags": {
+    "TagSet": []
+  },
+  "corsConfiguration": {
+    "CORSRules": []
+  },
+  "policy": {
+    "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"Policy1737840041357\",\"Statement\":[{\"Sid\":\"Stmt1737840039949\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::kashishop2/*\"}]}"
+  },
+  "acl": {
+    "Owner": {
+      "DisplayName": "awslabsc0w4246271t1656677615",
+      "ID": "3a859df4ce3a57fec3b652a8292e162b534ece89aac88d978ab2afe6470c39ce"
+    },
+    "Grants": [
+      {
+        "Grantee": {
+          "DisplayName": "awslabsc0w4246271t1656677615",
+          "ID": "3a859df4ce3a57fec3b652a8292e162b534ece89aac88d978ab2afe6470c39ce",
+          "Type": "CanonicalUser"
+        },
+        "Permission": "FULL_CONTROL"
+      }
+    ]
+  },
+  "websiteConfiguration": {
+    "IndexDocument": {
+      "Suffix": "index.html"
+    },
+    "ErrorDocument": {
+      "Key": "error.html"
+    }
+  },
+  "loggingConfiguration": {},
+  "replicationConfiguration": {},
+  "notificationConfiguration": {}
+}
+]
