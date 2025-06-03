@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Full-stack deployment for Kashishop (core infrastructure):
+  • Hosts frontend in S3
+  • Creates DynamoDB tables
+  • Configures Cognito (User Pool, Client, Identity Pool, Admins group)
+
+Parameters:
+  EnvPrefix:
+    Type: String
+    Description: Prefix for naming resources (e.g., dev, test, prod)
+    MinLength: 1
+
+Resources:
+  ########################################
+  # 1) S3 Bucket for Frontend            #
+  ########################################
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${EnvPrefix}-kashishop-frontend"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+      AccessControl: PublicRead
+    DeletionPolicy: Retain
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowPublicRead
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${EnvPrefix}-kashishop-frontend/*'
+
+  ########################################
+  # 2) DynamoDB Tables                  #
+  ########################################
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvPrefix}-Items"
+      AttributeDefinitions:
+        - AttributeName: itemID
+          AttributeType: S
+        - AttributeName: seller
+          AttributeType: S
+        - AttributeName: creationDate
+          AttributeType: S
+      KeySchema:
+        - AttributeName: itemID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: seller-creationDate-index
+          KeySchema:
+            - AttributeName: seller
+              KeyType: HASH
+            - AttributeName: creationDate
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+    DeletionPolicy: Retain
+
+  TransactionHistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvPrefix}-TransactionHistory"
+      AttributeDefinitions:
+        - AttributeName: transactionID
+          AttributeType: S
+        - AttributeName: buyerID
+          AttributeType: S
+        - AttributeName: sellerID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: transactionID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: buyerID-index
+          KeySchema:
+            - AttributeName: buyerID
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: sellerID-index
+          KeySchema:
+            - AttributeName: sellerID
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+    DeletionPolicy: Retain
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${EnvPrefix}-Users"
+      AttributeDefinitions:
+        - AttributeName: username
+          AttributeType: S
+        - AttributeName: userID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+    DeletionPolicy: Retain
+
+  ########################################
+  # 3) Cognito User Pool + Client + Group#
+  ########################################
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${EnvPrefix}-Kashishop"
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      MfaConfiguration: OFF                  # ← Must be OFF, ON, or OPTIONAL (not `false`)
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: sub
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: address
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+      UserPoolTags: {}                        # (no tags)
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${EnvPrefix}-KashishopClient"
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+
+  CognitoUserPoolGroupAdmins:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admins
+      UserPoolId: !Ref CognitoUserPool
+      Description: "Administrators group"
+      RoleArn: arn:aws:iam::530368666823:role/AdminsRole  # ← Make sure this role actually exists
+
+  CognitoIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub "${EnvPrefix}-KashishopIdentityPool"
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref CognitoUserPoolClient
+          ProviderName: !GetAtt CognitoUserPool.ProviderName
+          ServerSideTokenCheck: true
+    DeletionPolicy: Retain
+
+Outputs:
+  WebsiteURL:
+    Description: URL for the homepage (index.html) of the static website
+    Value: !Sub "http://${EnvPrefix}-kashishop-frontend.s3-website-${AWS::Region}.amazonaws.com/index.html"

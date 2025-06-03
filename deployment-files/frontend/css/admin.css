@@ -1,0 +1,99 @@
+.statistics {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.statistics h2 {
+  margin-bottom: 15px;
+  font-size: 24px;
+  color: #333;
+}
+
+.statistics p {
+  margin: 10px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.statistics span {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.statistics a.profile-link {
+  color: #007bff;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.statistics a.profile-link:hover {
+  text-decoration: underline;
+}
+
+.admin-tables {
+  margin: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+.tabs button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  margin: 0 5px;
+  border: none;
+  background-color: #4caf50;
+  color: white;
+  cursor: pointer;
+}
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 10px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #4caf50;
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}

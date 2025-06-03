@@ -1,0 +1,52 @@
+.edit-profile-form {
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  font-size: 1.4em;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 4px;
+  display: block;
+}
+
+.error {
+  border: 2px solid red;
+}
+
+button {
+  font-size: 1.4em;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 10px;
+  transition: all 0.3s ease;
+}
+
+.edit-profile-form input {
+  padding: 10px;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: border-color 0.3s;
+}
+
+.edit-profile-form input:focus {
+  border-color: #007bff;
+  outline: none;
+}

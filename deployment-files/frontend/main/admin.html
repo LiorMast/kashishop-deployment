@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/uuid/dist/umd/uuid.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <!-- sweetalert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- sweetalert -->
+<script src="https://cdn.datatables.net/2.2.1/js/dataTables.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.2.1/css/dataTables.dataTables.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="../script/global.js" defer></script>
+    <script src="../script/admin.js" defer></script>
+</head>
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="container-header">
+        <h1>Admin Panel</h1>
+    </div>
+        <div class="statistics">
+            <h2>Statistics</h2>
+            <p>Number of Items: <span></span></p>
+            <p>Number of Users: <span></span></p>
+            <p>User with Most Items: <span></span></p>
+            <p>User with Most Purchases: <span></span></p>
+        </div>
+        <div class="admin-tables">
+            <h2>Manage Items</h2>
+            <table id="items-table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Item ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Poster username</th>
+                        <th>Poster ID</th>
+                        <th>isActive</th>
+                        <th>isSold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                   
+                    
+                </tfoot>
+            </table>
+        
+                <!-- Table content goes here -->
+            </div>
+
+            <div class="admin-tables">
+                <h2>Manage Users</h2>
+                <table id="users-table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Full name</th>
+                            <th>Username</th>
+                            <th>Phone number</th>
+                            <th>Number of items on sale</th>
+                            <th>Join date</th>
+                            <th>isActive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                    </tfoot>
+                </table>
+            
+                    <!-- Table content goes here -->
+                </div>
+        </div>
+        
+    </main>
+</body>
+</html>

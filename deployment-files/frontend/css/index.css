@@ -1,0 +1,78 @@
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pagination button {
+  font-size: 1.2em;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: 1px solid #333;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button {
+  font-size: 1.4em !important;
+  padding: 10px 20px !important;
+  border-radius: 5px !important;
+  margin: 10px !important;
+  transition: all 0.3s ease !important;
+}
+
+.pagination button:hover {
+  background-color: #3399cc;
+  color: white;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 25px;
+  margin-top: 20px;
+}
+
+.logo {
+  border-radius: 25px;
+  box-shadow: 0.5px 5px 1px 4px;
+  min-width: 300px;
+}
+
+.items-per-page {
+  font-size: 1.2em;
+  padding: 5px;
+  margin-left: 10px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  width: 10%;
+}
+
+.disabled-button {
+  background-color: gray;
+  cursor: not-allowed;
+}
+
+.disabled-button:hover {
+  background-color: gray;
+  transform: scale(1);
+}
+
+.container-header {
+  padding-bottom: 20px;
+}
+
+.item-name {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.item-description {
+  font-size: 24px;
+  color: #555;
+  margin-bottom: 12px;
+}
