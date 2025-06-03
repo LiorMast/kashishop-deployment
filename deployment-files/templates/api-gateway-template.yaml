@@ -1,13 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  API Gateway stack for Kashishop.
-  Links all REST resources defined in all_apis.json to Lambda functions—assumes Lambdas
-  already exist under names prefixed by EnvPrefix.
+  API Gateway configuration for Kashishop2API based on the provided JSON definition.
+  Defines all resources, methods, integrations, models, and a prod stage.
 
 Parameters:
   EnvPrefix:
     Type: String
-    Description: Prefix used for naming Lambda functions (e.g., "dev", "prod")
+    Description: Prefix for naming resources (e.g., dev, test, prod)
     MinLength: 1
 
 Resources:
@@ -17,772 +16,1389 @@ Resources:
   KashishopApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub "${EnvPrefix}-KashishopAPI"
-      Description: "API Gateway for Kashishop Lambdas"
-      FailOnWarnings: true
-      DefinitionBody:
-        swagger: "2.0"
-        info:
-          title: !Sub "${EnvPrefix}-KashishopAPI"
-          version: "1.0"
-        schemes:
-          - "https"
-        paths:
-          "/Users/isadmin":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: userID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-is_admin_by_id/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.userID: "method.request.querystring.userID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "userID": "$input.params('userID')"
-                      }
-                    }
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/byid_accepted_transactions":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: userID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_user_transactions/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.userID: "method.request.querystring.userID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "userID": "$input.params('userID')"
-                      }
-                    }
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Items/seller":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: sellerID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_items_by_seller/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.sellerID: "method.request.querystring.sellerID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "sellerID": "$input.params('sellerID')"
-                      }
-                    }
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/mail":
-            post:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws_proxy
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-send_mail/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/all":
-            get:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_all_users/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/transactions/byid_update_status":
-            put:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws_proxy
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-update_transaction_status/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'OPTIONS,PUT'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/admin_statistics":
-            get:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-admin_statistics/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/get_email":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: userID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_user_email_by_id/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.userID: "method.request.querystring.userID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "userID": "$input.params('userID')"
-                      }
-                    }
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/byid_pending_transactions":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: userID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_pending_items/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.userID: "method.request.querystring.userID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "userID": "$input.params('userID')"
-                      }
-                    }
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Items/all":
-            get:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_all_items_admin/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                passthroughBehavior: WHEN_NO_TEMPLATES
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-          "/Users/byid":
-            get:
-              produces:
-                - "application/json"
-              parameters:
-                - name: userID
-                  in: query
-                  required: true
-                  type: string
-              responses:
-                "200":
-                  description: "200 response"
-                  headers:
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: aws
-                httpMethod: POST
-                uri:
-                  Fn::Sub: |
-                    arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function/${EnvPrefix}-get_user_by_id/invocations
-                credentials: arn:aws:iam::${AWS::AccountId}:role/LabRole
-                requestParameters:
-                  integration.request.querystring.userID: "method.request.querystring.userID"
-                requestTemplates:
-                  application/json: |
-                    {
-                      "queryStringParameters": {
-                        "userID": "$input.params('userID')"
-                      }
-                    }
-                passthroughBehavior: ANDLER
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-            options:
-              produces:
-                - "application/json"
-              responses:
-                "200":
-                  description: "CORS response"
-                  headers:
-                    Access-Control-Allow-Headers:
-                      type: string
-                    Access-Control-Allow-Methods:
-                      type: string
-                    Access-Control-Allow-Origin:
-                      type: string
-              x-amazon-apigateway-integration:
-                type: mock
-                requestTemplates:
-                  application/json: "{\"statusCode\": 200}"
-                passthroughBehavior: WHEN_NO_MATCH
-                responses:
-                  default:
-                    statusCode: "200"
-                    responseParameters:
-                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
-                      method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
-                      method.response.header.Access-Control-Allow-Origin: "'*'"
-
-        x-amazon-apigateway-binary-media-types: []
-        x-amazon-apigateway-policy:
-          Version: "2012-10-17"
-          Statement: []
+      Name: !Sub "${EnvPrefix}-Kashishop2API"
+      Description: "REST API for Kashishop2 generated from JSON spec"
 
   ########################################
-  # 2) Deployment                        #
+  # 2) API Gateway Models                #
+  ########################################
+  ErrorModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ContentType: application/json
+      Name: Error
+      Description: "This is a default error schema model"
+      Schema:
+        Fn::Join:
+          - ""
+          - - "{\n"
+            - "  \"$schema\" : \"http://json-schema.org/draft-04/schema#\",\n"
+            - "  \"title\" : \"Error Schema\",\n"
+            - "  \"type\" : \"object\",\n"
+            - "  \"properties\" : {\n"
+            - "    \"message\" : { \"type\" : \"string\" }\n"
+            - "  }\n"
+            - "}\n"
+
+  EmptyModel:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ContentType: application/json
+      Name: Empty
+      Description: "This is a default empty schema model"
+      Schema:
+        Fn::Join:
+          - ""
+          - - "{\n"
+            - "  \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n"
+            - "  \"title\" : \"Empty Schema\",\n"
+            - "  \"type\" : \"object\"\n"
+            - "}\n"
+
+  ########################################
+  # 3) Root Resource                     #
+  ########################################
+  ApiRootResourceId:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !GetAtt KashishopApi.RootResourceId
+      PathPart: ""    # Explicitly reference "/" for clarity
+
+  ########################################
+  # 4) Top-Level Resources under "/"     #
+  ########################################
+
+  ## 4.1 "/Users"
+  UsersResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !GetAtt KashishopApi.RootResourceId
+      PathPart: "Users"
+
+  ## 4.2 "/Items"
+  ItemsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !GetAtt KashishopApi.RootResourceId
+      PathPart: "Items"
+
+  ## 4.3 "/transactions"
+  TransactionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !GetAtt KashishopApi.RootResourceId
+      PathPart: "transactions"
+
+  ## 4.4 "/Images"
+  ImagesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !GetAtt KashishopApi.RootResourceId
+      PathPart: "Images"
+
+  ########################################
+  # 5) Child Resources under "/Users"    #
+  ########################################
+
+  ## 5.1 "/Users/isadmin"
+  UsersIsAdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "isadmin"
+
+  ## 5.2 "/Users/byid_accepted_transactions"
+  UsersByIdAcceptedTransactionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "byid_accepted_transactions"
+
+  ## 5.3 "/Users/mail"
+  UsersMailResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "mail"
+
+  ## 5.4 "/Users/all"
+  UsersAllResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "all"
+
+  ## 5.5 "/Users/admin_statistics"
+  UsersAdminStatisticsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "admin_statistics"
+
+  ## 5.6 "/Users/get_email"
+  UsersGetEmailResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "get_email"
+
+  ## 5.7 "/Users/byid_pending_transactions"
+  UsersByIdPendingTransactionsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "byid_pending_transactions"
+
+  ## 5.8 "/Users/byid"
+  UsersByIdResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "byid"
+
+  ## 5.9 "/Users/isActive_switch"
+  UsersIsActiveSwitchResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref UsersResource
+      PathPart: "isActive_switch"
+
+  ########################################
+  # 6) Child Resources under "/Items"    #
+  ########################################
+
+  ## 6.1 "/Items/seller"
+  ItemsSellerResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref ItemsResource
+      PathPart: "seller"
+
+  ## 6.2 "/Items/all"
+  ItemsAllResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref ItemsResource
+      PathPart: "all"
+
+  ## 6.3 "/Items/isActive_switch"
+  ItemsIsActiveSwitchResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref ItemsResource
+      PathPart: "isActive_switch"
+
+  ########################################
+  # 7) Child Resources under "/transactions" #
+  ########################################
+
+  ## 7.1 "/transactions/byid_update_status"
+  TransactionsByIdUpdateStatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref TransactionsResource
+      PathPart: "byid_update_status"
+
+  ## 7.2 "/transactions/buyer_pending"
+  TransactionsBuyerPendingResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ParentId: !Ref TransactionsResource
+      PathPart: "buyer_pending"
+
+  ########################################
+  # 8) Methods & Integrations for "/Users" #
+  ########################################
+
+  ## 8.1 GET "/Users/isadmin"
+  UsersIsAdminMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersIsAdminResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.userID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:is_admin_by_id/invocations
+        Credentials: !Sub "arn:aws:iam::${AWS::AccountId}:role/LabRole"
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestParameters:
+          integration.request.querystring.userID: "method.request.querystring.userID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "userID": "$input.params('userID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.2 OPTIONS "/Users/isadmin"
+  UsersIsAdminMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersIsAdminResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.3 GET "/Users/byid_accepted_transactions"
+  UsersByIdAcceptedTransactionsMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdAcceptedTransactionsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.userID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_user_transactions/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestParameters:
+          integration.request.querystring.userID: "method.request.querystring.userID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "userID": "$input.params('userID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.4 OPTIONS "/Users/byid_accepted_transactions"
+  UsersByIdAcceptedTransactionsMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdAcceptedTransactionsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.5 OPTIONS "/Users/mail"
+  UsersMailMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersMailResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.6 POST "/Users/mail"
+  UsersMailMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersMailResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:send_mail/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.7 GET "/Users/all"
+  UsersAllMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersAllResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_all_users/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.8 OPTIONS "/Users/all"
+  UsersAllMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersAllResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.9 GET "/Users/admin_statistics"
+  UsersAdminStatisticsMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersAdminStatisticsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:admin_statistics/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.10 OPTIONS "/Users/admin_statistics"
+  UsersAdminStatisticsMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersAdminStatisticsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.11 GET "/Users/get_email"
+  UsersGetEmailMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersGetEmailResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.userID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_user_email_by_id/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestParameters:
+          integration.request.querystring.userID: "method.request.querystring.userID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "userID": "$input.params('userID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.12 OPTIONS "/Users/get_email"
+  UsersGetEmailMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersGetEmailResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.13 OPTIONS "/Users/byid_pending_transactions"
+  UsersByIdPendingTransactionsMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdPendingTransactionsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.14 PUT "/Users/byid_pending_transactions"  (No GET defined; JSON only had OPTIONS)
+  # (No PUT integration defined in JSON; skipping)
+
+  ## 8.15 GET "/Users/byid"
+  UsersByIdMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.userID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_user_by_id/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestParameters:
+          integration.request.querystring.userID: "method.request.querystring.userID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "userID": "$input.params('userID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.16 OPTIONS "/Users/byid"
+  UsersByIdMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.17 PUT "/Users/byid"
+  UsersByIdMethodPut:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersByIdResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.userID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:update_cognito_user/invocations
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestParameters:
+          integration.request.querystring.userID: "method.request.querystring.userID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "userID": "$input.params('userID')"
+              },
+              "body": $input.body
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.18 OPTIONS "/Users/isActive_switch"
+  UsersIsActiveSwitchMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersIsActiveSwitchResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 8.19 PUT "/Users/isActive_switch"
+  UsersIsActiveSwitchMethodPut:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref UsersIsActiveSwitchResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:user_isactive_switch/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseModels:
+            application/json: Empty
+
+  ########################################
+  # 9) Methods & Integrations for "/Items" #
+  ########################################
+
+  ## 9.1 GET "/Items"
+  ItemsMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_items/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.2 OPTIONS "/Items"
+  ItemsMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.3 POST "/Items"
+  ItemsMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:add_item/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.4 GET "/Items/seller"
+  ItemsSellerMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsSellerResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.sellerID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_items_by_seller/invocations
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestParameters:
+          integration.request.querystring.sellerID: "method.request.querystring.sellerID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "sellerID": "$input.params('sellerID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.5 OPTIONS "/Items/seller"
+  ItemsSellerMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsSellerResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.6 GET "/Items/all"
+  ItemsAllMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsAllResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_all_items_admin/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.7 OPTIONS "/Items/all"
+  ItemsAllMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsAllResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.8 OPTIONS "/Items/isActive_switch"
+  ItemsIsActiveSwitchMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsIsActiveSwitchResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 9.9 PUT "/Items/isActive_switch"
+  ItemsIsActiveSwitchMethodPut:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ItemsIsActiveSwitchResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:item_isactive_switch/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseModels:
+            application/json: Empty
+
+  ########################################
+  # 10) Methods & Integrations for "/transactions" #
+  ########################################
+
+  ## 10.1 OPTIONS "/transactions"
+  TransactionsMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 10.2 POST "/transactions"
+  TransactionsMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:add_transaction/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 10.3 OPTIONS "/transactions/byid_update_status"
+  TransactionsByIdUpdateStatusMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsByIdUpdateStatusResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,PUT'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 10.4 PUT "/transactions/byid_update_status"
+  TransactionsByIdUpdateStatusMethodPut:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsByIdUpdateStatusResource
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:update_transaction_status/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 10.5 GET "/transactions/buyer_pending"
+  TransactionsBuyerPendingMethodGet:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsBuyerPendingResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      RequestParameters:
+        method.request.querystring.buyerID: true
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:get_pending_items/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestParameters:
+          integration.request.querystring.buyerID: "method.request.querystring.buyerID"
+        RequestTemplates:
+          application/json: |
+            {
+              "queryStringParameters": {
+                "buyerID": "$input.params('buyerID')"
+              }
+            }
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 10.6 OPTIONS "/transactions/buyer_pending"
+  TransactionsBuyerPendingMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref TransactionsBuyerPendingResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'GET,OPTIONS'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ########################################
+  # 11) Methods & Integrations for "/Images" #
+  ########################################
+
+  ## 11.1 OPTIONS "/Images"
+  ImagesMethodOptions:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ImagesResource
+      HttpMethod: OPTIONS
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: MOCK
+        PassthroughBehavior: WHEN_NO_MATCH
+        RequestTemplates:
+          application/json: '{"statusCode": 200}'
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+              method.response.header.Access-Control-Allow-Methods: "'OPTIONS,POST'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Headers: false
+            method.response.header.Access-Control-Allow-Methods: false
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ## 11.2 POST "/Images"
+  ImagesMethodPost:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref KashishopApi
+      ResourceId: !Ref ImagesResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      ApiKeyRequired: false
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub >
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
+          arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:upload_image/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        ContentHandling: CONVERT_TO_TEXT
+        IntegrationResponses:
+          - StatusCode: "200"
+            ResponseParameters:
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            ResponseTemplates:
+              application/json: ""
+      MethodResponses:
+        - StatusCode: "200"
+          ResponseParameters:
+            method.response.header.Access-Control-Allow-Origin: false
+          ResponseModels:
+            application/json: Empty
+
+  ########################################
+  # 12) Deployment & Stage               #
   ########################################
   KashishopApiDeployment:
     Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - UsersIsAdminMethodGet
+      - UsersIsAdminMethodOptions
+      - UsersByIdAcceptedTransactionsMethodGet
+      - UsersByIdAcceptedTransactionsMethodOptions
+      - UsersMailMethodOptions
+      - UsersMailMethodPost
+      - UsersAllMethodGet
+      - UsersAllMethodOptions
+      - UsersAdminStatisticsMethodGet
+      - UsersAdminStatisticsMethodOptions
+      - UsersGetEmailMethodGet
+      - UsersGetEmailMethodOptions
+      - UsersByIdPendingTransactionsMethodOptions
+      - UsersByIdMethodGet
+      - UsersByIdMethodOptions
+      - UsersByIdMethodPut
+      - UsersIsActiveSwitchMethodOptions
+      - UsersIsActiveSwitchMethodPut
+      - ItemsMethodGet
+      - ItemsMethodOptions
+      - ItemsMethodPost
+      - ItemsSellerMethodGet
+      - ItemsSellerMethodOptions
+      - ItemsAllMethodGet
+      - ItemsAllMethodOptions
+      - ItemsIsActiveSwitchMethodOptions
+      - ItemsIsActiveSwitchMethodPut
+      - TransactionsMethodOptions
+      - TransactionsMethodPost
+      - TransactionsByIdUpdateStatusMethodOptions
+      - TransactionsByIdUpdateStatusMethodPut
+      - TransactionsBuyerPendingMethodGet
+      - TransactionsBuyerPendingMethodOptions
+      - ImagesMethodOptions
+      - ImagesMethodPost
     Properties:
       RestApiId: !Ref KashishopApi
       StageName: prod
-    DependsOn:
-      - KashishopApi
-
-  ########################################
-  # 3) Lambda Permissions                #
-  ########################################
-  PermissionIsAdmin:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-is_admin_by_id"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/isadmin"
-
-  PermissionGetUserTransactions:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_user_transactions"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/byid_accepted_transactions"
-
-  PermissionGetItemsBySeller:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_items_by_seller"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Items/seller"
-
-  PermissionSendMail:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-send_mail"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/POST/Users/mail"
-
-  PermissionGetAllUsers:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_all_users"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/all"
-
-  PermissionUpdateTransactionStatus:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-update_transaction_status"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/PUT/transactions/byid_update_status"
-
-  PermissionAdminStatistics:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-admin_statistics"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/admin_statistics"
-
-  PermissionGetUserEmailById:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_user_email_by_id"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/get_email"
-
-  PermissionGetPendingItems:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_pending_items"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/byid_pending_transactions"
-
-  PermissionGetAllItemsAdmin:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_all_items_admin"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Items/all"
-
-  PermissionGetUserById:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_user_by_id"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Users/byid"
-
-  PermissionGetItems:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-get_items"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/GET/Items"
-
-  PermissionAddItem:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-add_item"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/POST/Items"
-
-  PermissionItemIsActiveSwitch:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Sub "${EnvPrefix}-item_isactive_switch"
-      Action: lambda:InvokeFunction
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${KashishopApi}/*/PUT/Items/isActive_switch"
 
 Outputs:
-  ApiGatewayRestApiId:
-    Description: ID of the deployed API Gateway
-    Value: !Ref KashishopApi
+  ApiEndpoint:
+    Description: "Invoke URL for the deployed API"
+    Value: !Sub "https://${KashishopApi}.execute-api.${AWS::Region}.amazonaws.com/prod"

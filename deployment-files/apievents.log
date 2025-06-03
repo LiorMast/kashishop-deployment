@@ -1,0 +1,59 @@
+{
+    "StackEvents": [
+        {
+            "StackId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "EventId": "b4ff66e0-409f-11f0-a1da-0e84592f7eff",
+            "StackName": "kash9-kashishop-api",
+            "LogicalResourceId": "kash9-kashishop-api",
+            "PhysicalResourceId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2025-06-03T17:25:12.898000+00:00",
+            "ResourceStatus": "ROLLBACK_COMPLETE"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "EventId": "b359cd30-409f-11f0-93c3-121b8a98e503",
+            "StackName": "kash9-kashishop-api",
+            "LogicalResourceId": "kash9-kashishop-api",
+            "PhysicalResourceId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2025-06-03T17:25:10.139000+00:00",
+            "ResourceStatus": "ROLLBACK_IN_PROGRESS",
+            "ResourceStatusReason": "Validation failed for following resources: [KashishopApi]. Rollback requested by user."
+        },
+        {
+            "StackId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "EventId": "KashishopApi-0a59df45-9387-4097-a5a0-94a26c4a1272",
+            "StackName": "kash9-kashishop-api",
+            "LogicalResourceId": "KashishopApi",
+            "PhysicalResourceId": "",
+            "ResourceType": "AWS::ApiGateway::RestApi",
+            "Timestamp": "2025-06-03T17:25:09.959000+00:00",
+            "ResourceStatus": "CREATE_FAILED",
+            "ResourceStatusReason": "Properties validation failed for resource KashishopApi with message:\n[#: extraneous key [DefinitionBody] is not permitted]",
+            "DetailedStatus": "VALIDATION_FAILED"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "EventId": "b1b1c280-409f-11f0-8d9b-12b9e061bc3b",
+            "StackName": "kash9-kashishop-api",
+            "LogicalResourceId": "kash9-kashishop-api",
+            "PhysicalResourceId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2025-06-03T17:25:07.349000+00:00",
+            "ResourceStatus": "CREATE_IN_PROGRESS",
+            "ResourceStatusReason": "User Initiated"
+        },
+        {
+            "StackId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "EventId": "adba70a0-409f-11f0-a969-0edfb9fb5273",
+            "StackName": "kash9-kashishop-api",
+            "LogicalResourceId": "kash9-kashishop-api",
+            "PhysicalResourceId": "arn:aws:cloudformation:us-east-1:550295503037:stack/kash9-kashishop-api/adbb33f0-409f-11f0-a969-0edfb9fb5273",
+            "ResourceType": "AWS::CloudFormation::Stack",
+            "Timestamp": "2025-06-03T17:25:00.891000+00:00",
+            "ResourceStatus": "REVIEW_IN_PROGRESS",
+            "ResourceStatusReason": "User Initiated"
+        }
+    ]
+}
