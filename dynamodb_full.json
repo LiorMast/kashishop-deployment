@@ -1,0 +1,280 @@
+[
+  {
+  "tableName": "Items",
+  "description": {
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "creationDate",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "itemID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "seller",
+        "AttributeType": "S"
+      }
+    ],
+    "TableName": "Items",
+    "KeySchema": [
+      {
+        "AttributeName": "itemID",
+        "KeyType": "HASH"
+      }
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": "2025-01-25T23:11:52.048000+02:00",
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 0,
+      "WriteCapacityUnits": 0
+    },
+    "TableSizeBytes": 16288,
+    "ItemCount": 52,
+    "TableArn": "arn:aws:dynamodb:us-east-1:530368666823:table/Items",
+    "TableId": "535b6926-8a81-41dc-937a-8e2b0d5643e9",
+    "BillingModeSummary": {
+      "BillingMode": "PAY_PER_REQUEST",
+      "LastUpdateToPayPerRequestDateTime": "2025-01-25T23:11:52.048000+02:00"
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "seller-creationDate-index",
+        "KeySchema": [
+          {
+            "AttributeName": "seller",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "creationDate",
+            "KeyType": "RANGE"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0,
+          "ReadCapacityUnits": 0,
+          "WriteCapacityUnits": 0
+        },
+        "IndexSizeBytes": 16288,
+        "ItemCount": 52,
+        "IndexArn": "arn:aws:dynamodb:us-east-1:530368666823:table/Items/index/seller-creationDate-index",
+        "WarmThroughput": {
+          "ReadUnitsPerSecond": 12000,
+          "WriteUnitsPerSecond": 4000,
+          "Status": "ACTIVE"
+        }
+      }
+    ],
+    "TableClassSummary": {
+      "TableClass": "STANDARD"
+    },
+    "DeletionProtectionEnabled": false,
+    "WarmThroughput": {
+      "ReadUnitsPerSecond": 12000,
+      "WriteUnitsPerSecond": 4000,
+      "Status": "ACTIVE"
+    }
+  },
+  "tags": [],
+  "timeToLive": {
+    "TimeToLiveStatus": "DISABLED"
+  },
+  "globalTableInfo": null,
+  "backups": []
+},
+  {
+  "tableName": "TransactionHistory",
+  "description": {
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "buyerID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "sellerID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "transactionID",
+        "AttributeType": "S"
+      }
+    ],
+    "TableName": "TransactionHistory",
+    "KeySchema": [
+      {
+        "AttributeName": "transactionID",
+        "KeyType": "HASH"
+      }
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": "2025-01-25T23:13:56.603000+02:00",
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 0,
+      "WriteCapacityUnits": 0
+    },
+    "TableSizeBytes": 7223,
+    "ItemCount": 31,
+    "TableArn": "arn:aws:dynamodb:us-east-1:530368666823:table/TransactionHistory",
+    "TableId": "01b9321b-0c4f-440a-bb62-1d80d470a39d",
+    "BillingModeSummary": {
+      "BillingMode": "PAY_PER_REQUEST",
+      "LastUpdateToPayPerRequestDateTime": "2025-01-25T23:13:56.603000+02:00"
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "buyerID-index",
+        "KeySchema": [
+          {
+            "AttributeName": "buyerID",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0,
+          "ReadCapacityUnits": 0,
+          "WriteCapacityUnits": 0
+        },
+        "IndexSizeBytes": 7223,
+        "ItemCount": 31,
+        "IndexArn": "arn:aws:dynamodb:us-east-1:530368666823:table/TransactionHistory/index/buyerID-index",
+        "WarmThroughput": {
+          "ReadUnitsPerSecond": 12000,
+          "WriteUnitsPerSecond": 4000,
+          "Status": "ACTIVE"
+        }
+      },
+      {
+        "IndexName": "sellerID-index",
+        "KeySchema": [
+          {
+            "AttributeName": "sellerID",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0,
+          "ReadCapacityUnits": 0,
+          "WriteCapacityUnits": 0
+        },
+        "IndexSizeBytes": 7223,
+        "ItemCount": 31,
+        "IndexArn": "arn:aws:dynamodb:us-east-1:530368666823:table/TransactionHistory/index/sellerID-index",
+        "WarmThroughput": {
+          "ReadUnitsPerSecond": 12000,
+          "WriteUnitsPerSecond": 4000,
+          "Status": "ACTIVE"
+        }
+      }
+    ],
+    "TableClassSummary": {
+      "TableClass": "STANDARD"
+    },
+    "DeletionProtectionEnabled": false,
+    "WarmThroughput": {
+      "ReadUnitsPerSecond": 12000,
+      "WriteUnitsPerSecond": 4000,
+      "Status": "ACTIVE"
+    }
+  },
+  "tags": [],
+  "timeToLive": {
+    "TimeToLiveStatus": "DISABLED"
+  },
+  "globalTableInfo": null,
+  "backups": []
+},
+  {
+  "tableName": "Users",
+  "description": {
+    "AttributeDefinitions": [
+      {
+        "AttributeName": "userID",
+        "AttributeType": "S"
+      },
+      {
+        "AttributeName": "username",
+        "AttributeType": "S"
+      }
+    ],
+    "TableName": "Users",
+    "KeySchema": [
+      {
+        "AttributeName": "username",
+        "KeyType": "HASH"
+      }
+    ],
+    "TableStatus": "ACTIVE",
+    "CreationDateTime": "2025-01-25T23:21:13.003000+02:00",
+    "ProvisionedThroughput": {
+      "NumberOfDecreasesToday": 0,
+      "ReadCapacityUnits": 0,
+      "WriteCapacityUnits": 0
+    },
+    "TableSizeBytes": 3916,
+    "ItemCount": 13,
+    "TableArn": "arn:aws:dynamodb:us-east-1:530368666823:table/Users",
+    "TableId": "91ef3dbd-098a-4d3e-aa9d-0a76d9014160",
+    "BillingModeSummary": {
+      "BillingMode": "PAY_PER_REQUEST",
+      "LastUpdateToPayPerRequestDateTime": "2025-01-25T23:21:13.003000+02:00"
+    },
+    "GlobalSecondaryIndexes": [
+      {
+        "IndexName": "userID-index",
+        "KeySchema": [
+          {
+            "AttributeName": "userID",
+            "KeyType": "HASH"
+          }
+        ],
+        "Projection": {
+          "ProjectionType": "ALL"
+        },
+        "IndexStatus": "ACTIVE",
+        "ProvisionedThroughput": {
+          "NumberOfDecreasesToday": 0,
+          "ReadCapacityUnits": 0,
+          "WriteCapacityUnits": 0
+        },
+        "IndexSizeBytes": 3916,
+        "ItemCount": 13,
+        "IndexArn": "arn:aws:dynamodb:us-east-1:530368666823:table/Users/index/userID-index",
+        "WarmThroughput": {
+          "ReadUnitsPerSecond": 12000,
+          "WriteUnitsPerSecond": 4000,
+          "Status": "ACTIVE"
+        }
+      }
+    ],
+    "TableClassSummary": {
+      "TableClass": "STANDARD"
+    },
+    "DeletionProtectionEnabled": false,
+    "WarmThroughput": {
+      "ReadUnitsPerSecond": 12000,
+      "WriteUnitsPerSecond": 4000,
+      "Status": "ACTIVE"
+    }
+  },
+  "tags": [],
+  "timeToLive": {
+    "TimeToLiveStatus": "DISABLED"
+  },
+  "globalTableInfo": null,
+  "backups": []
+}
+]
