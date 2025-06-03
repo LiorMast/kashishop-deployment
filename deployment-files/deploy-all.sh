@@ -9,7 +9,7 @@
 #   2. Ensure helper scripts are in Unix format & executable
 #   3. Deploy core CloudFormation stack (S3, DynamoDB, Cognito)
 #   4. Deploy all Lambda functions
-#   5. Deploy API Gateway stack
+#   5. Deploy API Gateway stack (ensuring S3 bucket for large templates)
 #   6. Sync frontend files to S3
 #   7. Print important outputs (Website URL, API ID)
 #
@@ -34,6 +34,7 @@ LAMBDA_SCRIPT="${SCRIPTS_DIR}/deploy-lambda.sh"
 FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 API_TEMPLATE="${TEMPLATE_DIR}/api-gateway-template.yaml"
 CORE_TEMPLATE="${TEMPLATE_DIR}/main-template.yaml"
+TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
 echo "🌐 Environment: ${ENV}"
 echo
@@ -41,9 +42,6 @@ echo
 #
 # 1️⃣ AWS Identity & Region/Account Info
 #
-# echo "🔐 AWS Caller Identity:"
-# aws sts get-caller-identity
-
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGION=$(aws configure get region || echo "us-east-1")
 echo -e "\n🚩 Using AWS Account: ${ACCOUNT_ID}, Region: ${REGION}"
@@ -65,14 +63,15 @@ echo
 #
 # 3️⃣ Deploy Core CloudFormation Stack
 #
-echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
-aws cloudformation deploy \
-  --template-file "${CORE_TEMPLATE}" \
-  --stack-name "${CORE_STACK_NAME}" \
-  --parameter-overrides EnvPrefix="${ENV}" \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --region "${REGION}"
-echo "✅ Core Stack deployed."
+# Uncomment if core stack deployment is required here
+# echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
+# aws cloudformation deploy \
+#   --template-file "${CORE_TEMPLATE}" \
+#   --stack-name "${CORE_STACK_NAME}" \
+#   --parameter-overrides EnvPrefix="${ENV}" \
+#   --capabilities CAPABILITY_NAMED_IAM \
+#   --region "${REGION}"
+# echo "✅ Core Stack deployed."
 echo
 
 #
@@ -84,15 +83,22 @@ echo "✅ Lambdas deployed."
 echo
 
 #
-# 5️⃣ Deploy API Gateway Stack
+# 5️⃣ Deploy API Gateway Stack (ensure S3 bucket exists)
 #
 echo "🚀 Deploying API Gateway Stack: ${API_STACK_NAME}"
+# Check if the S3 bucket for templates exists
+if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
+  echo "🔨 S3 bucket '${TEMPLATE_BUCKET}' does not exist. Creating it..."
+  aws s3 mb "s3://${TEMPLATE_BUCKET}" --region "${REGION}"
+fi
+# Deploy with --s3-bucket to support large templates
 aws cloudformation deploy \
   --template-file "${API_TEMPLATE}" \
   --stack-name "${API_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
-  --region "${REGION}"
+  --region "${REGION}" \
+  --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ API Gateway Stack deployed."
 echo
 
@@ -132,4 +138,4 @@ if [[ -n "$API_ID" ]]; then
 fi
 
 echo
-echo "🎉 All resources for '${ENV}' have been provisioned and deployed!"
+ echo "🎉 All resources for '${ENV}' have been provisioned and deployed!"

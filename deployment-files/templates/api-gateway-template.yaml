@@ -27,8 +27,8 @@ Resources:
     Properties:
       RestApiId: !Ref KashishopApi
       ContentType: application/json
-      Name: Error
-      Description: "This is a default error schema model"
+      Name: !Sub "${EnvPrefix}-ErrorModel"      # ← Prefixed with EnvPrefix
+      Description: "Default error schema model"
       Schema:
         Fn::Join:
           - ""
@@ -46,8 +46,8 @@ Resources:
     Properties:
       RestApiId: !Ref KashishopApi
       ContentType: application/json
-      Name: Empty
-      Description: "This is a default empty schema model"
+      Name: !Sub "${EnvPrefix}-EmptyModel"      # ← Prefixed with EnvPrefix
+      Description: "Default empty schema model"
       Schema:
         Fn::Join:
           - ""
@@ -272,7 +272,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel   # ← Reference the prefixed model
 
   ## 8.2 OPTIONS "/Users/isadmin"
   UsersIsAdminMethodOptions:
@@ -301,7 +301,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.3 GET "/Users/byid_accepted_transactions"
   UsersByIdAcceptedTransactionsMethodGet:
@@ -342,7 +342,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.4 OPTIONS "/Users/byid_accepted_transactions"
   UsersByIdAcceptedTransactionsMethodOptions:
@@ -371,7 +371,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.5 OPTIONS "/Users/mail"
   UsersMailMethodOptions:
@@ -400,7 +400,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.6 POST "/Users/mail"
   UsersMailMethodPost:
@@ -430,7 +430,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.7 GET "/Users/all"
   UsersAllMethodGet:
@@ -460,7 +460,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.8 OPTIONS "/Users/all"
   UsersAllMethodOptions:
@@ -489,7 +489,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.9 GET "/Users/admin_statistics"
   UsersAdminStatisticsMethodGet:
@@ -519,7 +519,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.10 OPTIONS "/Users/admin_statistics"
   UsersAdminStatisticsMethodOptions:
@@ -548,7 +548,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.11 GET "/Users/get_email"
   UsersGetEmailMethodGet:
@@ -589,7 +589,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.12 OPTIONS "/Users/get_email"
   UsersGetEmailMethodOptions:
@@ -618,7 +618,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.13 OPTIONS "/Users/byid_pending_transactions"
   UsersByIdPendingTransactionsMethodOptions:
@@ -647,7 +647,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.14 PUT "/Users/byid_pending_transactions"  (No GET defined; JSON only had OPTIONS)
   # (No PUT integration defined in JSON; skipping)
@@ -691,7 +691,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.16 OPTIONS "/Users/byid"
   UsersByIdMethodOptions:
@@ -720,7 +720,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.17 PUT "/Users/byid"
   UsersByIdMethodPut:
@@ -762,7 +762,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.18 OPTIONS "/Users/isActive_switch"
   UsersIsActiveSwitchMethodOptions:
@@ -791,7 +791,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 8.19 PUT "/Users/isActive_switch"
   UsersIsActiveSwitchMethodPut:
@@ -817,7 +817,7 @@ Resources:
       MethodResponses:
         - StatusCode: "200"
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ########################################
   # 9) Methods & Integrations for "/Items" #
@@ -851,7 +851,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.2 OPTIONS "/Items"
   ItemsMethodOptions:
@@ -880,7 +880,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.3 POST "/Items"
   ItemsMethodPost:
@@ -910,7 +910,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.4 GET "/Items/seller"
   ItemsSellerMethodGet:
@@ -951,7 +951,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.5 OPTIONS "/Items/seller"
   ItemsSellerMethodOptions:
@@ -980,7 +980,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.6 GET "/Items/all"
   ItemsAllMethodGet:
@@ -1010,7 +1010,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.7 OPTIONS "/Items/all"
   ItemsAllMethodOptions:
@@ -1039,7 +1039,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.8 OPTIONS "/Items/isActive_switch"
   ItemsIsActiveSwitchMethodOptions:
@@ -1068,7 +1068,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 9.9 PUT "/Items/isActive_switch"
   ItemsIsActiveSwitchMethodPut:
@@ -1096,7 +1096,7 @@ Resources:
       MethodResponses:
         - StatusCode: "200"
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ########################################
   # 10) Methods & Integrations for "/transactions" #
@@ -1129,7 +1129,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 10.2 POST "/transactions"
   TransactionsMethodPost:
@@ -1159,7 +1159,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 10.3 OPTIONS "/transactions/byid_update_status"
   TransactionsByIdUpdateStatusMethodOptions:
@@ -1188,7 +1188,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 10.4 PUT "/transactions/byid_update_status"
   TransactionsByIdUpdateStatusMethodPut:
@@ -1218,7 +1218,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 10.5 GET "/transactions/buyer_pending"
   TransactionsBuyerPendingMethodGet:
@@ -1259,7 +1259,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 10.6 OPTIONS "/transactions/buyer_pending"
   TransactionsBuyerPendingMethodOptions:
@@ -1288,7 +1288,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ########################################
   # 11) Methods & Integrations for "/Images" #
@@ -1321,7 +1321,7 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: false
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ## 11.2 POST "/Images"
   ImagesMethodPost:
@@ -1351,7 +1351,7 @@ Resources:
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: false
           ResponseModels:
-            application/json: Empty
+            application/json: !Ref EmptyModel
 
   ########################################
   # 12) Deployment & Stage               #
