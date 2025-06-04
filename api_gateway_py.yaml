@@ -188,9 +188,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-is_admin_by_id/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:is_admin_by_id/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -261,9 +260,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_transactions/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_transactions/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -334,9 +332,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_items_by_seller/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_items_by_seller/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -441,9 +438,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-send_mail/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:send_mail/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -473,9 +469,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_all_users/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_all_users/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -573,9 +568,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-update_transaction_status/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:update_transaction_status/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -605,9 +599,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-admin_statistics/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:admin_statistics/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -671,9 +664,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_email_by_id/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_email_by_id/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -778,9 +770,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_all_items_admin/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_all_items_admin/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -844,9 +835,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_by_id/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_by_id/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -951,9 +941,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-user_isactive_switch/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:user_isactive_switch/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1013,9 +1002,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-upload_image/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:upload_image/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1079,9 +1067,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-add_transaction/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:add_transaction/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1111,9 +1098,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_by_id/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_by_id/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -1184,9 +1170,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-update_cognito_user/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:update_cognito_user/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -1224,9 +1209,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_pending_items/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_pending_items/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -1297,9 +1281,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_pending_transactions/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_pending_transactions/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestParameters:
@@ -1370,9 +1353,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_items/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_items/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1436,9 +1418,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-add_item/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:add_item/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1502,9 +1483,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-item_isactive_switch/invocations
         IntegrationHttpMethod: POST
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:item_isactive_switch/invocations
         Credentials:
           Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1568,7 +1548,19 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       StageName:
-        Fn::Sub: ${EnvPrefix}-20250604125029201634
+        Fn::Sub: ${EnvPrefix}-20250604120913
+  Kashishop2apistage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName:
+        Fn::Sub: ${EnvPrefix}-20250604120913
+      RestApiId:
+        Ref: Kashishop2apirestapi
+      DeploymentId:
+        Ref: Kashishop2apideployment
+      CacheClusterEnabled: false
+      MethodSettings: []
+      TracingEnabled: false
   Kashishop2apierrormodel:
     Type: AWS::ApiGateway::Model
     Properties:
@@ -1602,4 +1594,4 @@ Outputs:
   ApiEndpoint:
     Description: Invoke URL for the deployed API
     Value:
-      Fn::Sub: https://${Kashishop2apirestapi}.execute-api.${AWS::Region}.amazonaws.com/20250604125029201634
+      Fn::Sub: https://${Kashishop2apirestapi}.execute-api.${AWS::Region}.amazonaws.com/20250604120913

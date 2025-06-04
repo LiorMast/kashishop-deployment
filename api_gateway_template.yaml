@@ -1,28 +1,29 @@
-# ---------------------- Template Header ----------------------
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'CloudFormation template for API Gateway API: Kashishop2API'
-
-# ---------------------- Parameters ----------------------
-Parameters:
-  EnvPrefix:
-    Type: String
-    Description: Prefix for naming resources (e.g., dev, test, prod)
-    MinLength: 1
-
-# ---------------------- Resources ----------------------
 Resources:
   Kashishop2apirestapi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name:
-        Fn::Sub: ${EnvPrefix}Kashishop2API
+      Name: Kashishop2API
+  Kashishop2apirestapiRootResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+      PathPart: ''
+      ParentId:
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
   Kashishop2apiUsersIsadminresource:
     Type: AWS::ApiGateway::Resource
     Properties:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: isadmin
   Kashishop2apiUsersByidAcceptedTransactionsresource:
     Type: AWS::ApiGateway::Resource
@@ -30,7 +31,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: byid_accepted_transactions
   Kashishop2apiItemsSellerresource:
     Type: AWS::ApiGateway::Resource
@@ -38,7 +41,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiItemsresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: seller
   Kashishop2apiUsersMailresource:
     Type: AWS::ApiGateway::Resource
@@ -46,7 +51,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: mail
   Kashishop2apiUsersAllresource:
     Type: AWS::ApiGateway::Resource
@@ -54,7 +61,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: all
   Kashishop2apiTransactionsByidUpdateStatusresource:
     Type: AWS::ApiGateway::Resource
@@ -62,7 +71,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiTransactionsresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: byid_update_status
   Kashishop2apiUsersAdminStatisticsresource:
     Type: AWS::ApiGateway::Resource
@@ -70,7 +81,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: admin_statistics
   Kashishop2apiUsersGetEmailresource:
     Type: AWS::ApiGateway::Resource
@@ -78,7 +91,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: get_email
   Kashishop2apiUsersByidPendingTransactionsresource:
     Type: AWS::ApiGateway::Resource
@@ -86,7 +101,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: byid_pending_transactions
   Kashishop2apiItemsAllresource:
     Type: AWS::ApiGateway::Resource
@@ -94,7 +111,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiItemsresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: all
   Kashishop2apiUsersByidresource:
     Type: AWS::ApiGateway::Resource
@@ -102,7 +121,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: byid
   Kashishop2apiUsersIsactiveSwitchresource:
     Type: AWS::ApiGateway::Resource
@@ -110,7 +131,9 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Ref: Kashishop2apiUsersresource
+        Fn::GetAtt:
+        - Kashishop2apirestapi
+        - RootResourceId
       PathPart: isActive_switch
   Kashishop2apiImagesresource:
     Type: AWS::ApiGateway::Resource
@@ -118,9 +141,7 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Fn::GetAtt:
-        - Kashishop2apirestapi
-        - RootResourceId
+        Ref: Kashishop2apirestapiRootResource
       PathPart: Images
   Kashishop2apiTransactionsresource:
     Type: AWS::ApiGateway::Resource
@@ -128,9 +149,7 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Fn::GetAtt:
-        - Kashishop2apirestapi
-        - RootResourceId
+        Ref: Kashishop2apirestapiRootResource
       PathPart: transactions
   Kashishop2apiUsersresource:
     Type: AWS::ApiGateway::Resource
@@ -138,9 +157,7 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Fn::GetAtt:
-        - Kashishop2apirestapi
-        - RootResourceId
+        Ref: Kashishop2apirestapiRootResource
       PathPart: Users
   Kashishop2apiTransactionsBuyerPendingresource:
     Type: AWS::ApiGateway::Resource
@@ -164,9 +181,7 @@ Resources:
       RestApiId:
         Ref: Kashishop2apirestapi
       ParentId:
-        Fn::GetAtt:
-        - Kashishop2apirestapi
-        - RootResourceId
+        Ref: Kashishop2apirestapiRootResource
       PathPart: Items
   Kashishop2apiItemsIsactiveSwitchresource:
     Type: AWS::ApiGateway::Resource
@@ -188,11 +203,9 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-is_admin_by_id/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:is_admin_by_id/invocations
+        Credentials: arn:aws:iam::530368666823:role/LabRole
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -207,6 +220,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -227,8 +242,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -261,11 +274,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_transactions/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_transactions/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -280,6 +290,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -300,8 +312,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -334,11 +344,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_items_by_seller/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_items_by_seller/invocations
         RequestParameters:
           integration.request.querystring.sellerID: method.request.querystring.sellerID
         RequestTemplates:
@@ -353,6 +360,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -373,8 +382,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -407,8 +414,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -441,11 +446,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-send_mail/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:send_mail/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -455,6 +457,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -473,11 +477,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_all_users/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_all_users/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -487,6 +488,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -505,8 +508,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -539,8 +540,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -573,11 +572,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-update_transaction_status/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:update_transaction_status/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -587,6 +583,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -605,11 +603,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-admin_statistics/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:admin_statistics/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -619,6 +614,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -637,8 +634,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -671,11 +666,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_email_by_id/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_email_by_id/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -690,6 +682,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -710,8 +704,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -744,8 +736,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -778,11 +768,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_all_items_admin/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_all_items_admin/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -792,6 +779,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -810,8 +799,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -844,11 +831,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_by_id/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_by_id/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -863,6 +847,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -883,8 +869,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -917,8 +901,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -951,11 +933,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-user_isactive_switch/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:user_isactive_switch/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -963,6 +942,8 @@ Resources:
         CacheKeyParameters: []
         IntegrationResponses:
         - StatusCode: '200'
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -979,8 +960,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1013,11 +992,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-upload_image/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:upload_image/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -1027,6 +1003,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1045,8 +1023,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1079,11 +1055,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-add_transaction/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:add_transaction/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -1093,6 +1066,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1111,11 +1086,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_by_id/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_by_id/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -1130,6 +1102,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1150,8 +1124,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1184,11 +1156,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-update_cognito_user/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:update_cognito_user/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -1204,6 +1173,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1224,11 +1195,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_pending_items/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_pending_items/invocations
         RequestParameters:
           integration.request.querystring.buyerID: method.request.querystring.buyerID
         RequestTemplates:
@@ -1243,6 +1211,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1263,8 +1233,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1297,11 +1265,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_user_pending_transactions/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_user_pending_transactions/invocations
         RequestParameters:
           integration.request.querystring.userID: method.request.querystring.userID
         RequestTemplates:
@@ -1316,6 +1281,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1336,8 +1303,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1370,11 +1335,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-get_items/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:get_items/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -1384,6 +1346,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1402,8 +1366,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1436,11 +1398,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-add_item/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:add_item/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -1450,6 +1409,8 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
@@ -1468,8 +1429,6 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: MOCK
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
         RequestTemplates:
           application/json: '{"statusCode": 200}'
         PassthroughBehavior: WHEN_NO_MATCH
@@ -1502,11 +1461,8 @@ Resources:
       ApiKeyRequired: false
       Integration:
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${EnvPrefix}-item_isactive_switch/invocations
         IntegrationHttpMethod: POST
-        Credentials:
-          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/LabRole
+        Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:530368666823:function:item_isactive_switch/invocations
         PassthroughBehavior: WHEN_NO_MATCH
         ContentHandling: CONVERT_TO_TEXT
         TimeoutInMillis: 29000
@@ -1516,66 +1472,20 @@ Resources:
         - StatusCode: '200'
           ResponseParameters:
             method.response.header.Access-Control-Allow-Origin: '''*'''
+          ResponseTemplates:
+            application/json: null
       MethodResponses:
       - StatusCode: '200'
         ResponseModels:
           application/json: Empty
         ResponseParameters:
           method.response.header.Access-Control-Allow-Origin: false
-  Kashishop2apideployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-    - Kashishop2apiUsersIsadmingetmethod
-    - Kashishop2apiUsersIsadminoptionsmethod
-    - Kashishop2apiUsersByidAcceptedTransactionsgetmethod
-    - Kashishop2apiUsersByidAcceptedTransactionsoptionsmethod
-    - Kashishop2apiItemsSellergetmethod
-    - Kashishop2apiItemsSelleroptionsmethod
-    - Kashishop2apiUsersMailoptionsmethod
-    - Kashishop2apiUsersMailpostmethod
-    - Kashishop2apiUsersAllgetmethod
-    - Kashishop2apiUsersAlloptionsmethod
-    - Kashishop2apiTransactionsByidUpdateStatusoptionsmethod
-    - Kashishop2apiTransactionsByidUpdateStatusputmethod
-    - Kashishop2apiUsersAdminStatisticsgetmethod
-    - Kashishop2apiUsersAdminStatisticsoptionsmethod
-    - Kashishop2apiUsersGetEmailgetmethod
-    - Kashishop2apiUsersGetEmailoptionsmethod
-    - Kashishop2apiUsersByidPendingTransactionsoptionsmethod
-    - Kashishop2apiItemsAllgetmethod
-    - Kashishop2apiItemsAlloptionsmethod
-    - Kashishop2apiUsersByidgetmethod
-    - Kashishop2apiUsersByidoptionsmethod
-    - Kashishop2apiUsersIsactiveSwitchoptionsmethod
-    - Kashishop2apiUsersIsactiveSwitchputmethod
-    - Kashishop2apiImagesoptionsmethod
-    - Kashishop2apiImagespostmethod
-    - Kashishop2apiTransactionsoptionsmethod
-    - Kashishop2apiTransactionspostmethod
-    - Kashishop2apiUsersgetmethod
-    - Kashishop2apiUsersoptionsmethod
-    - Kashishop2apiUsersputmethod
-    - Kashishop2apiTransactionsBuyerPendinggetmethod
-    - Kashishop2apiTransactionsBuyerPendingoptionsmethod
-    - Kashishop2apiUsersPendingTransactionsgetmethod
-    - Kashishop2apiUsersPendingTransactionsoptionsmethod
-    - Kashishop2apiItemsgetmethod
-    - Kashishop2apiItemsoptionsmethod
-    - Kashishop2apiItemspostmethod
-    - Kashishop2apiItemsIsactiveSwitchoptionsmethod
-    - Kashishop2apiItemsIsactiveSwitchputmethod
-    Properties:
-      RestApiId:
-        Ref: Kashishop2apirestapi
-      StageName:
-        Fn::Sub: ${EnvPrefix}-20250604125029201634
   Kashishop2apierrormodel:
     Type: AWS::ApiGateway::Model
     Properties:
       RestApiId:
         Ref: Kashishop2apirestapi
-      Name:
-        Fn::Sub: ${EnvPrefix}Error
+      Name: Error
       ContentType: application/json
       Schema:
         $schema: http://json-schema.org/draft-04/schema#
@@ -1589,17 +1499,130 @@ Resources:
     Properties:
       RestApiId:
         Ref: Kashishop2apirestapi
-      Name:
-        Fn::Sub: ${EnvPrefix}Empty
+      Name: Empty
       ContentType: application/json
       Schema:
         $schema: http://json-schema.org/draft-04/schema#
         title: Empty Schema
         type: object
-
-# ---------------------- Outputs ----------------------
-Outputs:
-  ApiEndpoint:
-    Description: Invoke URL for the deployed API
-    Value:
-      Fn::Sub: https://${Kashishop2apirestapi}.execute-api.${AWS::Region}.amazonaws.com/20250604125029201634
+  Kashishop2api0b5wv4deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api1mkiisdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api786c7ddeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api7aspu0deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api7j9ti8deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api7se6kideployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api8dhr6ddeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2api9weov8deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apibxd16qdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apidwoqa7deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apie19qlrdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apih7mpc6deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apilz5moideployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apimhqilxdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apios033rdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apipxy1ttdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apiqiq8dldeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apir15aj6deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apirfihe2deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apisltpfcdeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apiv8f8w0deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apiwxpbm9deployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId:
+        Ref: Kashishop2apirestapi
+  Kashishop2apiprodstage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: prod
+      RestApiId:
+        Ref: Kashishop2apirestapi
+      DeploymentId:
+        Ref: Kashishop2apiwxpbm9deployment
+      CacheClusterEnabled: false
+      MethodSettings: []
+      TracingEnabled: false

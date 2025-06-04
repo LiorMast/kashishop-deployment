@@ -63,20 +63,21 @@ echo
 #
 # 3️⃣ Deploy Core CloudFormation Stack
 #
-# Uncomment if core stack deployment is required here
-# echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
-# aws cloudformation deploy \
-#   --template-file "${CORE_TEMPLATE}" \
-#   --stack-name "${CORE_STACK_NAME}" \
-#   --parameter-overrides EnvPrefix="${ENV}" \
-#   --capabilities CAPABILITY_NAMED_IAM \
-#   --region "${REGION}"
-# echo "✅ Core Stack deployed."
+
+echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
+aws cloudformation deploy \
+  --template-file "${CORE_TEMPLATE}" \
+  --stack-name "${CORE_STACK_NAME}" \
+  --parameter-overrides EnvPrefix="${ENV}" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region "${REGION}"
+echo "✅ Core Stack deployed."
 echo
 
 #
 # 4️⃣ Deploy Lambda Functions
 #
+
 echo "🛠️  Deploying Lambda functions..."
 "${LAMBDA_SCRIPT}" "${ENV}"
 echo "✅ Lambdas deployed."
@@ -85,6 +86,7 @@ echo
 #
 # 5️⃣ Deploy API Gateway Stack (ensure S3 bucket exists)
 #
+
 echo "🚀 Deploying API Gateway Stack: ${API_STACK_NAME}"
 # Check if the S3 bucket for templates exists
 if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
@@ -105,6 +107,7 @@ echo
 #
 # 6️⃣ Sync Frontend to S3
 #
+
 echo "📦 Syncing frontend files to S3..."
 "${FRONTEND_SCRIPT}" "${ENV}"
 echo "✅ Frontend synced."
@@ -113,6 +116,7 @@ echo
 #
 # 7️⃣ Print Key Outputs
 #
+
 echo "📢 Deployment complete for environment: ${ENV}"
 echo
 
