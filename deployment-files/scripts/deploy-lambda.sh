@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
 #
-# This script zips each Python file in the ./lambda/ directory
-# and either creates or updates the corresponding AWS Lambda function
-# named "${EnvPrefix}-${FUNCTION_NAME}" using the IAM role
-# arn:aws:iam::<ACCOUNT_ID>:role/LabRole.
+# deploy-lambda.sh (updated)
 #
-# Usage:
-#   chmod +x deploy-lambdas.sh
-#   ./deploy-lambdas.sh <EnvPrefix>
+# Usage: ./deploy-lambda.sh <EnvPrefix>
 #
-# Example:
-#   ./deploy-lambdas.sh dev
-#
-# Assumptions:
-# - All Lambda Python files sit directly in ./lambda/
-#   e.g. lambda/user_isactive_switch.py
-# - Handler for every function is lambda_function.lambda_handler.
-# - Runtime is python3.13 and Architecture x86_64.
-# - IAM role is arn:aws:iam::<ACCOUNT_ID>:role/LabRole.
+# Checks for Python3 and runs deploy-lambda.py if available. Otherwise, prints error and exits.
 #
 set -euo pipefail
 
@@ -34,57 +21,15 @@ if [ ! -d "$LambdaDir" ]; then
   exit 1
 fi
 
-# Determine AWS account ID
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-RoleArn="arn:aws:iam::${ACCOUNT_ID}:role/LabRole"
+# Check for python3 and deploy-lambda.py script
+SCRIPT_DIR="$(dirname "$0")"
+PY_DEPLOY="$SCRIPT_DIR/deploy-lambda.py"
 
-echo "Using IAM role: $RoleArn" >&2
-echo "Deploying Lambda functions with prefix '$EnvPrefix'..." >&2
-
-for file_path in "$LambdaDir"/*.py; do
-  [ -f "$file_path" ] || continue
-  filename="$(basename "$file_path")"
-  fn_name="${filename%.py}"
-  zip_path="/tmp/${fn_name}.zip"
-
-  echo "----------------------------------------" >&2
-  echo "Packaging function: $fn_name" >&2
-
-  # Create a temporary directory and copy the .py file as lambda_function.py
-  tmpdir="$(mktemp -d)"
-  cp "$file_path" "$tmpdir/lambda_function.py"
-  (cd "$tmpdir" && zip -qr "$zip_path" lambda_function.py)
-  rm -rf "$tmpdir"
-  echo "  • Zipped $fn_name → $zip_path" >&2
-
-  full_fn_name="${EnvPrefix}-${fn_name}"
-  echo "  • Checking if Lambda '$full_fn_name' exists..." >&2
-
-  if aws lambda get-function --function-name "$full_fn_name" >/dev/null 2>&1; then
-    echo "  • Lambda exists. Updating code..." >&2
-    aws lambda update-function-code \
-      --function-name "$full_fn_name" \
-      --zip-file "fileb://$zip_path" \
-      >/dev/null
-    echo "  ✓ Updated code for $full_fn_name" >&2
-  else
-    echo "  • Lambda does not exist. Creating with default settings..." >&2
-    aws lambda create-function \
-      --function-name "$full_fn_name" \
-      --runtime python3.13 \
-      --role "$RoleArn" \
-      --handler lambda_function.lambda_handler \
-      --zip-file "fileb://$zip_path" \
-      --timeout 15 \
-      --memory-size 128 \
-      --architecture x86_64 \
-      --publish \
-      >/dev/null
-    echo "  ✓ Created $full_fn_name" >&2
-  fi
-
-  rm -f "$zip_path"
-  echo >&2
-done
-
-echo "✅ All Lambda functions deployed." >&2
+if command -v python3 >/dev/null 2>&1 && [ -f "$PY_DEPLOY" ]; then
+  echo "🐍 Python3 detected and deploy-lambda.py found. Running Python-based deployment..."
+  python3 "$PY_DEPLOY" "$EnvPrefix"
+  exit 0
+else
+  echo "❌ Python3 or deploy-lambda.py not found. Please install Python3 and ensure deploy-lambda.py is present in the same directory."
+  exit 1
+fi
