@@ -1,0 +1,55 @@
+# ---------------------- Template Header ----------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for S3 buckets and policies
+
+# ---------------------- Parameters ----------------------
+Parameters:
+  EnvPrefix:
+    Type: String
+    Description: Prefix for naming buckets (e.g., dev, test, prod)
+    MinLength: 1
+
+# ---------------------- Resources ----------------------
+Resources:
+  Kashishop2Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: ${EnvPrefix}-kashishop2
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ApplyServerSideEncryptionByDefault:
+            SSEAlgorithm: AES256
+          BucketKeyEnabled: false
+      WebsiteConfiguration:
+        IndexDocument:
+          Suffix: index.html
+        ErrorDocument:
+          Key: error.html
+  Kashishop2BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: Kashishop2Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: Policy1737840041357
+        Statement:
+        - Sid: Stmt1737840039949
+          Effect: Allow
+          Principal: '*'
+          Action: s3:GetObject
+          Resource: arn:aws:s3:::kashishop2/*
+
+# ---------------------- Outputs ----------------------
+Outputs:
+  Kashishop2BucketName:
+    Description: Name of bucket kashishop2
+    Value:
+      Ref: Kashishop2Bucket
+  Kashishop2BucketArn:
+    Description: ARN of bucket kashishop2
+    Value:
+      Fn::GetAtt:
+      - Kashishop2Bucket
+      - Arn
