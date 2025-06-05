@@ -18,14 +18,11 @@ Resources:
         Fn::Sub: ${EnvPrefix}-kashishop2
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-        - ApplyServerSideEncryptionByDefault:
+        - ServerSideEncryptionByDefault:
             SSEAlgorithm: AES256
-          BucketKeyEnabled: false
       WebsiteConfiguration:
-        IndexDocument:
-          Suffix: index.html
-        ErrorDocument:
-          Key: error.html
+        IndexDocument: index.html
+        ErrorDocument: error.html
   Kashishop2BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   Full-stack deployment for Kashishop (core infrastructure):
-  • Hosts frontend in S3
+  • Hosts frontend in S3 (with a public-read policy)
   • Creates DynamoDB tables (Items, TransactionHistory, Users) per JSON spec
   • Configures Cognito (User Pool, Client, Identity Pool, Admins group)
 
@@ -51,7 +51,8 @@ Resources:
       GroupName: Admins
       UserPoolId: !Ref CognitoUserPool
       Description: "Administrators group"
-      RoleArn: arn:aws:iam::530368666823:role/AdminsRole
+      # If you do not need an IAM role attached, simply omit RoleArn:
+      # RoleArn: arn:aws:iam::550295503037:role/AdminsRole
 
   CognitoIdentityPool:
     Type: AWS::Cognito::IdentityPool
