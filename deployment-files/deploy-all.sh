@@ -12,8 +12,9 @@
 #   5. Deploy S3 buckets via s3-template
 #   6. Deploy all Lambda functions
 #   7. Deploy API Gateway stack (ensuring S3 bucket for large templates)
-#   8. Sync frontend files to S3
-#   9. Print important outputs (Website URL, API ID)
+#   8. Update front-end JS with new API endpoint
+#   9. Sync frontend files to S3
+#  10. Print important outputs (Website URL, API ID)
 #
 # Example:
 #   chmod +x scripts/deploy-all.sh
@@ -22,7 +23,7 @@
 set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
-  echo "❌ Usage: \$0 <ENV>"
+  echo "❌ Usage: $0 <ENV>"
   exit 1
 fi
 
@@ -35,6 +36,7 @@ TEMPLATE_DIR="$(pwd)/templates"
 SCRIPTS_DIR="$(pwd)/scripts"
 FRONTEND_DIR="$(pwd)/frontend"
 LAMBDA_SCRIPT="${SCRIPTS_DIR}/deploy-lambda.sh"
+UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
 FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 CORE_TEMPLATE="${TEMPLATE_DIR}/main-template.yaml"
 DYNAMO_TEMPLATE="${TEMPLATE_DIR}/dynamodb-template.yaml"
@@ -140,7 +142,16 @@ echo "✅ API Gateway Stack deployed."
 echo
 
 #
-# 8️⃣ Sync Frontend to S3
+# 8️⃣ Update Frontend JS with new API endpoint
+#
+
+echo "🔄 Updating frontend JS with API endpoint..."
+"${UPDATE_API_SCRIPT}" "${ENV}"
+echo "✅ API endpoint updated in global.js."
+echo
+
+#
+# 9️⃣ Sync Frontend to S3
 #
 
 echo "📦 Syncing frontend files to S3..."
@@ -149,7 +160,7 @@ echo "✅ Frontend synced."
 echo
 
 #
-# 9️⃣ Print Key Outputs
+# 🔟 Print Key Outputs
 #
 
 echo "📢 Deployment complete for environment: ${ENV}"

@@ -1,23 +1,14 @@
 #!/usr/bin/env bash
 #
-# update-api-endpoint.sh
+# update-api-endpoint.sh (fully fixed)
 #
 # Usage: ./update-api-endpoint.sh <EnvPrefix>
 #
-# This script retrieves the API Gateway invoke URL from the CloudFormation stack
-# named <EnvPrefix>-kashishop-api, then updates the 'const API' variable in
-# ../frontend/script/global.js to point to that URL.
+# Retrieves the API endpoint from the CloudFormation stack
+# <EnvPrefix>-kashishop-api (using the ApiEndpoint output), and
+# updates the const API variable in frontend/script/global.js
+# to that value (no duplicating https://).
 #
-# Requirements:
-#  • AWS CLI v2 (configured with credentials & region)
-#  • The CFN stack "<EnvPrefix>-kashishop-api" must exist and export ApiGatewayRestApiId
-#  • Node-style JS file at ../frontend/script/global.js containing a line like:
-#      const API = "...";
-#
-# Example:
-#   chmod +x update-api-endpoint.sh
-#   ./update-api-endpoint.sh dev
-
 set -euo pipefail
 
 if [ "$#" -ne 1 ]; then
@@ -27,34 +18,41 @@ fi
 
 EnvPrefix="$1"
 API_STACK_NAME="${EnvPrefix}-kashishop-api"
-GLOBAL_JS="$(pwd)/../frontend/script/global.js"
+GLOBAL_JS="$(pwd)/frontend/script/global.js"
 
 if [ ! -f "$GLOBAL_JS" ]; then
   echo "❌ global.js not found at '$GLOBAL_JS'"
   exit 1
 fi
 
-echo "Retrieving API Gateway ID from CloudFormation stack: $API_STACK_NAME" >&2
-API_ID=$(aws cloudformation describe-stacks \
+echo "Retrieving API endpoint from CloudFormation stack: $API_STACK_NAME" >&2
+API_ENDPOINT=$(aws cloudformation describe-stacks \
   --stack-name "$API_STACK_NAME" \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiGatewayRestApiId'].OutputValue" \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" \
   --output text)
 
-if [ -z "$API_ID" ] || [ "$API_ID" == "None" ]; then
-  echo "❌ Could not find ApiGatewayRestApiId output in stack '$API_STACK_NAME'."
+if [ -z "$API_ENDPOINT" ] || [ "$API_ENDPOINT" == "None" ]; then
+  echo "❌ Could not find ApiEndpoint output in stack '$API_STACK_NAME'."
   exit 1
 fi
 
-# Construct the invoke URL for the 'prod' stage
-REGION=$(aws configure get region || echo "us-east-1")
-INVOKE_URL="https://${API_ID}.execute-api.${REGION}.amazonaws.com/prod"
+# If the output already begins with http/https, use it. Otherwise, build the full URL
+if [[ "$API_ENDPOINT" =~ ^https?:// ]]; then
+  INVOKE_URL="$API_ENDPOINT"
+else
+  REGION=$(aws configure get region || echo "us-east-1")
+  INVOKE_URL="https://${API_ENDPOINT}.execute-api.${REGION}.amazonaws.com/prod"
+fi
 
 echo "Updating global.js with API endpoint: $INVOKE_URL" >&2
 
-# Use sed to replace the const API value (handles single or double quotes)
-# Matches: const API = "...";  or const API = '...';
-# and replaces inner string with new URL
-sed -i.bak -E "s@(const API *= *[\"\'])[^"]*([\"\'];)@\1${INVOKE_URL}\2@" "$GLOBAL_JS"
+# Replace the full const API assignment line (handles both single‐ and double‐quoted)
+# Pattern matches: const API = "..."; or const API = '...';
+
+sed -i.bak -E \
+  "s|const[[:space:]]+API[[:space:]]*=[[:space:]]*\"[^\"]*\";|const API = \"${INVOKE_URL}\";|; \
+  s|const[[:space:]]+API[[:space:]]*=[[:space:]]*'[^']*';|const API = '${INVOKE_URL}';|" \
+  "$GLOBAL_JS"
 
 if [ $? -eq 0 ]; then
   echo "✅ global.js updated successfully." >&2
