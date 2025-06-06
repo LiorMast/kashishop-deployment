@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 #
-# deploy-frontend.sh
+# deploy-frontend.sh (updated)
 #
-# This script syncs everything under ./frontend/ into the S3 bucket
-# created by the CloudFormation template: <EnvPrefix>-kashishop-frontend.
-# It will also explicitly create any “empty” folders that exist in ./frontend/.
+# Usage: ./deploy-frontend.sh <EnvPrefix>
 #
-# Usage:
-#   chmod +x deploy-frontend.sh
-#   ./deploy-frontend.sh <EnvPrefix>
-#
-# Example:
-#   ./deploy-frontend.sh dev
+# This script reads the S3 CloudFormation stack (named <EnvPrefix>-kashishop-s3),
+# finds the first S3 bucket created by that stack, and syncs the contents of ./frontend/
+# into that bucket.
+# It also creates placeholder objects for any empty directories under ./frontend/.
 #
 # Requirements:
 #  • AWS CLI v2 (configured with credentials & region)
-#  • The CFN stack for core infrastructure (including S3 bucket) must be CREATE_COMPLETE.
+#  • The CFN stack "<EnvPrefix>-kashishop-s3" must exist and contain at least one S3 bucket.
+#
+# Example:
+#   chmod +x deploy-frontend.sh
+#   ./deploy-frontend.sh dev
 #
 set -euo pipefail
 
@@ -25,7 +25,6 @@ if [ "$#" -ne 1 ]; then
 fi
 
 EnvPrefix="$1"
-BucketName="${EnvPrefix}-kashishop-frontend"
 FrontendDir="$(pwd)/frontend"
 
 if [ ! -d "$FrontendDir" ]; then
@@ -33,47 +32,54 @@ if [ ! -d "$FrontendDir" ]; then
   exit 1
 fi
 
-echo "Deploying 'frontend/' contents into S3 bucket: $BucketName" >&2
+# Derive the S3 stack name
+S3_STACK_NAME="${EnvPrefix}-kashishop-s3"
 
-# 1) Verify bucket exists
-if ! aws s3api head-bucket --bucket "$BucketName" >/dev/null 2>&1; then
-  echo "❌ Bucket '$BucketName' does not exist or you lack permissions." >&2
+echo "Looking up bucket from CloudFormation stack: $S3_STACK_NAME" >&2
+# Retrieve the physical resource ID of the first S3 bucket in the stack
+BUCKET_NAME=$(aws cloudformation list-stack-resources \
+  --stack-name "$S3_STACK_NAME" \
+  --query "StackResourceSummaries[?ResourceType=='AWS::S3::Bucket'] | [0].PhysicalResourceId" \
+  --output text)
+
+if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" == "None" ]; then
+  echo "❌ No S3 bucket found in stack '$S3_STACK_NAME'."
   exit 1
 fi
 
-# 2) Upload all non-empty files via aws s3 sync
-#    This command preserves directory structure and uploads files.
-#
-aws s3 sync "$FrontendDir" "s3://$BucketName/" --acl public-read
+echo "Deploying 'frontend/' contents into S3 bucket: $BUCKET_NAME" >&2
 
-# 3) Explicitly create “folders” for any directories in ./frontend that are empty.
-#    AWS S3 has a flat namespace, so we create a zero-byte object with trailing slash.
-#
+# 1) Verify bucket exists
+if ! aws s3api head-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1; then
+  echo "❌ Bucket '$BUCKET_NAME' does not exist or you lack permissions." >&2
+  exit 1
+fi
+
+# 2) Sync all non-empty files via aws s3 sync
+#    This command preserves directory structure and uploads files.
+aws s3 sync "$FrontendDir" "s3://$BUCKET_NAME/" --acl public-read
+
 echo "Creating placeholders for empty directories (if any)..." >&2
 
-# Find all directories under ./frontend
+# 3) Create zero-byte objects for directories that contain no files
 while IFS= read -r dir; do
   # Check if directory contains any files
   if find "$dir" -maxdepth 1 -type f | read -r _; then
     # Directory has at least one file; skip
     continue
   fi
-
   # Compute the relative path from frontend/
   relpath="${dir#$FrontendDir/}"
-  # Append a trailing slash for S3 “folder”
+  # Append trailing slash for S3 “folder”
   s3key="${relpath%/}/"
 
-  echo "  • Creating empty folder: $s3key" >&2
+  echo "  • Creating empty folder object: $s3key" >&2
   aws s3api put-object \
-    --bucket "$BucketName" \
+    --bucket "$BUCKET_NAME" \
     --key "$s3key" \
     --acl public-read \
     --body /dev/null >/dev/null
 
 done < <(find "$FrontendDir" -type d)
 
-echo "✅ Frontend deployment to s3://$BucketName/ complete." >&2
-
-
-# End of deploy-frontend.sh
+echo "✅ Frontend deployment to s3://$BUCKET_NAME/ complete." >&2

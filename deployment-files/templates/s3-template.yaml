@@ -16,6 +16,11 @@ Resources:
     Properties:
       BucketName:
         Fn::Sub: ${EnvPrefix}-kashishop2
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
       BucketEncryption:
         ServerSideEncryptionConfiguration:
         - ServerSideEncryptionByDefault:
@@ -36,7 +41,8 @@ Resources:
           Effect: Allow
           Principal: '*'
           Action: s3:GetObject
-          Resource: arn:aws:s3:::kashishop2/*
+          Resource:
+            Fn::Sub: arn:aws:s3:::${EnvPrefix}-kashishop2/*
 
 # ---------------------- Outputs ----------------------
 Outputs:

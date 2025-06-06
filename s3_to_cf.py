@@ -48,27 +48,35 @@ def convert_s3_to_cfn(buckets_json):
         # Prefix the bucket name
         bucket_props['BucketName'] = {'Fn::Sub': f"${{EnvPrefix}}-{base_name}"}
 
+        # Public access block: disable blocking so policy can attach
+        bucket_props['PublicAccessBlockConfiguration'] = {
+            'BlockPublicAcls': False,
+            'IgnorePublicAcls': False,
+            'BlockPublicPolicy': False,
+            'RestrictPublicBuckets': False
+        }
+
         # Versioning
         versioning = bucket_obj.get('versioning', {})
         if 'Status' in versioning:
             bucket_props['VersioningConfiguration'] = {'Status': versioning['Status']}
 
-        # Encryption
+        # Encryption: convert ApplyServerSideEncryptionByDefault to ServerSideEncryptionByDefault
         encryption = bucket_obj.get('encryption', {}).get('ServerSideEncryptionConfiguration')
         if encryption and 'Rules' in encryption and encryption['Rules']:
-            rules = []
+            rules_converted = []
             for rule in encryption['Rules']:
                 default = rule.get('ApplyServerSideEncryptionByDefault', {})
                 sse_alg = default.get('SSEAlgorithm')
+                kms_key = default.get('KMSMasterKeyID')
                 if sse_alg:
-                    rules.append({
-                        'ServerSideEncryptionByDefault': {
-                            'SSEAlgorithm': sse_alg
-                        }
-                    })
-            if rules:
+                    bydefault = {'SSEAlgorithm': sse_alg}
+                    if kms_key:
+                        bydefault['KMSMasterKeyID'] = kms_key
+                    rules_converted.append({'ServerSideEncryptionByDefault': bydefault})
+            if rules_converted:
                 bucket_props['BucketEncryption'] = {
-                    'ServerSideEncryptionConfiguration': rules
+                    'ServerSideEncryptionConfiguration': rules_converted
                 }
 
         # Lifecycle
@@ -86,14 +94,14 @@ def convert_s3_to_cfn(buckets_json):
         if cors:
             bucket_props['CorsConfiguration'] = {'CorsRules': cors}
 
-        # Website configuration
+        # Website configuration: set IndexDocument and ErrorDocument as strings
         website = bucket_obj.get('websiteConfiguration', {})
         if 'IndexDocument' in website or 'ErrorDocument' in website:
             wc = {}
             if 'IndexDocument' in website:
-                wc['IndexDocument'] = website['IndexDocument']['Suffix']
+                wc['IndexDocument'] = website['IndexDocument'].get('Suffix')
             if 'ErrorDocument' in website:
-                wc['ErrorDocument'] = website['ErrorDocument']['Key']
+                wc['ErrorDocument'] = website['ErrorDocument'].get('Key')
             bucket_props['WebsiteConfiguration'] = wc
 
         # Logging configuration
@@ -107,7 +115,7 @@ def convert_s3_to_cfn(buckets_json):
             'Properties': bucket_props
         }
 
-        # Bucket Policy (if exists, adjust resource ARNs to include EnvPrefix)
+        # Bucket Policy (if exists)
         policy_str = bucket_obj.get('policy', {}).get('Policy')
         if policy_str and policy_str != 'null':
             try:
@@ -115,33 +123,29 @@ def convert_s3_to_cfn(buckets_json):
             except json.JSONDecodeError:
                 policy_doc = None
             if policy_doc:
-                # Rewrite all resource ARNs to include the EnvPrefix in bucket names
+                # Rewrite all resource ARNs to include EnvPrefix
                 new_statements = []
                 for stmt in policy_doc.get('Statement', []):
                     new_stmt = stmt.copy()
                     if 'Resource' in stmt:
                         res = stmt['Resource']
                         if isinstance(res, str):
-                            new_stmt['Resource'] = {'Fn::Sub': res.replace('arn:aws:s3:::', '${EnvPrefix}-')}
+                            if res.startswith(f'arn:aws:s3:::{base_name}'):
+                                suffix = res[len(f'arn:aws:s3:::{base_name}'):] or ''
+                                new_stmt['Resource'] = {'Fn::Sub': f"arn:aws:s3:::${{EnvPrefix}}-{base_name}{suffix}"}
+                            else:
+                                new_stmt['Resource'] = res
                         elif isinstance(res, list):
-                            new_stmt['Resource'] = [{ 'Fn::Sub': r.replace('arn:aws:s3:::', '${EnvPrefix}-')} for r in res]
+                            new_list = []
+                            for r in res:
+                                if isinstance(r, str) and r.startswith(f'arn:aws:s3:::{base_name}'):
+                                    suffix = r[len(f'arn:aws:s3:::{base_name}'):] or ''
+                                    new_list.append({'Fn::Sub': f"arn:aws:s3:::${{EnvPrefix}}-{base_name}{suffix}"})
+                                else:
+                                    new_list.append(r)
+                            new_stmt['Resource'] = new_list
                     new_statements.append(new_stmt)
                 policy_doc['Statement'] = new_statements
-                policy_logical = f"{logical_base}BucketPolicy"
-                resources[policy_logical] = {
-                    'Type': 'AWS::S3::BucketPolicy',
-                    'Properties': {
-                        'Bucket': {'Ref': bucket_logical},
-                        'PolicyDocument': policy_doc
-                    }
-                }
-        policy_str = bucket_obj.get('policy', {}).get('Policy')
-        if policy_str and policy_str != 'null':
-            try:
-                policy_doc = json.loads(policy_str)
-            except json.JSONDecodeError:
-                policy_doc = None
-            if policy_doc:
                 policy_logical = f"{logical_base}BucketPolicy"
                 resources[policy_logical] = {
                     'Type': 'AWS::S3::BucketPolicy',
