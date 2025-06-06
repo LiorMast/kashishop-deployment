@@ -57,19 +57,23 @@ fi
 
 # 2) Sync all non-empty files via aws s3 sync
 #    This command preserves directory structure and uploads files.
-aws s3 sync "$FrontendDir" "s3://$BUCKET_NAME/" --acl public-read
+aws s3 sync "$FrontendDir" "s3://$BUCKET_NAME/"
 
 echo "Creating placeholders for empty directories (if any)..." >&2
 
 # 3) Create zero-byte objects for directories that contain no files
 while IFS= read -r dir; do
-  # Check if directory contains any files
-  if find "$dir" -maxdepth 1 -type f | read -r _; then
-    # Directory has at least one file; skip
+  # Skip the top-level frontend directory
+  relpath="${dir#$FrontendDir/}"
+  if [ "$relpath" == "" ]; then
     continue
   fi
-  # Compute the relative path from frontend/
-  relpath="${dir#$FrontendDir/}"
+
+  # Check if directory contains any files or non-empty subdirectories
+  if find "$dir" -mindepth 1 | grep -q .; then
+    # Directory is not empty; skip
+    continue
+  fi
   # Append trailing slash for S3 “folder”
   s3key="${relpath%/}/"
 
@@ -77,8 +81,7 @@ while IFS= read -r dir; do
   aws s3api put-object \
     --bucket "$BUCKET_NAME" \
     --key "$s3key" \
-    --acl public-read \
-    --body /dev/null >/dev/null
+    >/dev/null
 
 done < <(find "$FrontendDir" -type d)
 
