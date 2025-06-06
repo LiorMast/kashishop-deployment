@@ -7,13 +7,11 @@ from datetime import datetime, timezone
 
 # Helper to sanitize names for CloudFormation logical IDs
 # Removes non-alphanumeric characters and capitalizes each part
-
 def sanitize_name(name):
     parts = re.split(r'[^0-9a-zA-Z]+', name)
     return ''.join([part.capitalize() for part in parts if part])
 
-# Recursively convert OrderedDict to regular dicts for YAML serialization
-
+# Recursively convert OrderedDict to plain dicts for YAML serialization
 def ordered_to_plain(obj):
     if isinstance(obj, OrderedDict):
         obj = dict(obj)
@@ -23,14 +21,11 @@ def ordered_to_plain(obj):
         return [ordered_to_plain(v) for v in obj]
     return obj
 
-# Main conversion function
-
+# Main conversion function with full CORS support (including wildcard methods and GatewayResponses)
 def convert_api_to_cfn(api_json):
-    # Generate a timestamp for stage suffix
-    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')  # include microseconds for uniqueness
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
 
     template = OrderedDict()
-    # Template header
     template['AWSTemplateFormatVersion'] = '2010-09-09'
     template['Description'] = f"CloudFormation template for API Gateway API: {api_json.get('name')}"
 
@@ -43,36 +38,42 @@ def convert_api_to_cfn(api_json):
         }
     })
 
-    # Resources section
     resources_section = OrderedDict()
 
-    # Create RestApi resource with EnvPrefix to avoid name conflicts
+    # 1) Create RestApi
     api_logical_id = sanitize_name(api_json['name'] + 'RestApi')
     resources_section[api_logical_id] = {
         'Type': 'AWS::ApiGateway::RestApi',
         'Properties': {
-            'Name': {'Fn::Sub': f"${{EnvPrefix}}{api_json['name']}"}
+            'Name': {'Fn::Sub': f"${{EnvPrefix}}{api_json['name']}"},
+            'EndpointConfiguration': {'Types': ['REGIONAL']}
         }
     }
 
-    # Prepare mapping of resource IDs to logical IDs
+    # 2) Map each resource ID to a logical name (root path is None)
     resource_id_to_logical = {}
     for res in api_json['resources']:
         if res.get('path') == '/':
             resource_id_to_logical[res['id']] = None
         else:
-            resource_id_to_logical[res['id']] = sanitize_name(api_json['name'] + res['path'].replace('/', '_') + 'Resource')
+            resource_id_to_logical[res['id']] = sanitize_name(
+                api_json['name'] + res['path'].replace('/', '_') + 'Resource'
+            )
 
-    method_logical_ids = []  # Collect all method logical IDs for deployment DependsOn
+    method_logical_ids = []
 
-    # Create API Gateway Resource objects (skip root)
+    # 3) Create AWS::ApiGateway::Resource objects
     for res in api_json['resources']:
         if res.get('path') == '/':
             continue
         logical_id = resource_id_to_logical[res['id']]
         parent_id = res.get('parentId')
         parent_logical = resource_id_to_logical.get(parent_id)
-        parent_reference = {'Fn::GetAtt': [api_logical_id, 'RootResourceId']} if parent_logical is None else {'Ref': parent_logical}
+        parent_reference = (
+            {'Fn::GetAtt': [api_logical_id, 'RootResourceId']} 
+            if parent_logical is None 
+            else {'Ref': parent_logical}
+        )
         resources_section[logical_id] = {
             'Type': 'AWS::ApiGateway::Resource',
             'Properties': {
@@ -82,14 +83,33 @@ def convert_api_to_cfn(api_json):
             }
         }
 
-    # Add methods and their integrations
+    # 4) Add Methods and CORS OPTIONS for each resource
     for res in api_json['resources']:
         res_logical = resource_id_to_logical.get(res['id'])
+        resource_ref = (
+            {'Fn::GetAtt': [api_logical_id, 'RootResourceId']} 
+            if res.get('path') == '/' 
+            else {'Ref': res_logical}
+        )
         methods = res.get('resourceMethods', {})
+
         for http_method, method_def in methods.items():
-            method_logical = sanitize_name(api_json['name'] + res['path'].replace('/', '_') + http_method + 'Method')
+            # a) Main Method (GET/POST/PUT/... whichever is defined)
+            method_logical = sanitize_name(
+                api_json['name'] + res['path'].replace('/', '_') + http_method + 'Method'
+            )
             method_logical_ids.append(method_logical)
-            resource_ref = {'Fn::GetAtt': [api_logical_id, 'RootResourceId']} if res['path'] == '/' else {'Ref': res_logical}
+
+            # Build MethodResponses (always include CORS wildcard header)
+            method_responses = [{
+                'StatusCode': '200',
+                'ResponseModels': {'application/json': 'Empty'},
+                'ResponseParameters': {
+                    'method.response.header.Access-Control-Allow-Origin': False
+                }
+            }]
+
+            # Build Method properties
             method_props = {
                 'RestApiId': {'Ref': api_logical_id},
                 'ResourceId': resource_ref,
@@ -97,48 +117,48 @@ def convert_api_to_cfn(api_json):
                 'AuthorizationType': method_def.get('authorizationType', 'NONE'),
                 'ApiKeyRequired': method_def.get('apiKeyRequired', False),
                 'Integration': {},
-                'MethodResponses': []
+                'MethodResponses': method_responses
             }
-            # Request parameters
+
+            # If there are request parameters to pass through, include them
             req_params = method_def.get('requestParameters', {})
             if req_params:
-                method_props['RequestParameters'] = {param: req_params[param] for param in req_params}
+                method_props['RequestParameters'] = {
+                    param: req_params[param] for param in req_params
+                }
 
-            # Method responses
-            for status, resp in method_def.get('methodResponses', {}).items():
-                resp_obj = {'StatusCode': status, 'ResponseModels': {}}
-                resp_params = resp.get('responseParameters', {})
-                if resp_params:
-                    resp_obj['ResponseParameters'] = {k: v for k, v in resp_params.items()}
-                resp_models = resp.get('responseModels', {})
-                if resp_models:
-                    resp_obj['ResponseModels'] = resp_models
-                method_props['MethodResponses'].append(resp_obj)
-
-            # Integration configuration
+            # b) Integration setup
             integration = method_def.get('methodIntegration', {})
             if integration:
                 integ_obj = {'Type': integration['type']}
-                if integration.get('type') in ['AWS', 'AWS_PROXY', 'HTTP', 'HTTP_PROXY']:
-                    # Rewrite URI to use EnvPrefix-functionName
-                    raw_uri = integration.get('uri')
-                    match = re.search(r'/functions/arn:aws:lambda:[^:]+:[0-9]+:function:([^/]+)/', raw_uri or '')
+                raw_uri = integration.get('uri')
+
+                # If this is a Lambda or HTTP integration, rewrite the function ARN to include EnvPrefix
+                if integration.get('type') in ['AWS', 'AWS_PROXY', 'HTTP', 'HTTP_PROXY'] and raw_uri:
+                    match = re.search(r'/functions/arn:aws:lambda:[^:]+:[0-9]+:function:([^/]+)/', raw_uri)
                     if match:
                         orig_fn = match.group(1)
-                        # Construct new URI using Fn::Sub
-                        new_uri = {'Fn::Sub': f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:${{AWS::Region}}:${{AWS::AccountId}}:function:${{EnvPrefix}}-{orig_fn}/invocations"}
+                        new_uri = {
+                            'Fn::Sub': (
+                                f"arn:aws:apigateway:${{AWS::Region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:${{AWS::Region}}:"
+                                f"${{AWS::AccountId}}:function:${{EnvPrefix}}-{orig_fn}/invocations"
+                            )
+                        }
                         integ_obj['Uri'] = new_uri
                     else:
                         integ_obj['Uri'] = raw_uri
                     integ_obj['IntegrationHttpMethod'] = integration.get('httpMethod')
-                # Always use same-account LabRole
+
+                # Always use the “LabRole” for Lambda
                 integ_obj['Credentials'] = {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}
-                req_integ_params = integration.get('requestParameters', {})
-                if req_integ_params:
-                    integ_obj['RequestParameters'] = req_integ_params
-                req_templates = integration.get('requestTemplates', {})
-                if req_templates:
-                    integ_obj['RequestTemplates'] = req_templates
+
+                # Pass through any request parameters or templates
+                if integration.get('requestParameters'):
+                    integ_obj['RequestParameters'] = integration['requestParameters']
+                if integration.get('requestTemplates'):
+                    integ_obj['RequestTemplates'] = integration['requestTemplates']
+
+                # Preserve passthroughBehavior, contentHandling, timeout, and caching if present
                 if integration.get('passthroughBehavior'):
                     integ_obj['PassthroughBehavior'] = integration['passthroughBehavior']
                 if integration.get('contentHandling'):
@@ -149,18 +169,15 @@ def convert_api_to_cfn(api_json):
                     integ_obj['CacheNamespace'] = integration['cacheNamespace']
                 if integration.get('cacheKeyParameters') is not None:
                     integ_obj['CacheKeyParameters'] = integration['cacheKeyParameters']
-                integ_responses = []
-                for status_code, integ_resp in integration.get('integrationResponses', {}).items():
-                    ir = {'StatusCode': status_code}
-                    if integ_resp.get('responseParameters'):
-                        ir['ResponseParameters'] = integ_resp['responseParameters']
-                    if integ_resp.get('responseTemplates'):
-                        filtered_templates = {k: v for k, v in integ_resp['responseTemplates'].items() if v is not None}
-                        if filtered_templates:
-                            ir['ResponseTemplates'] = filtered_templates
-                    integ_responses.append(ir)
-                if integ_responses:
-                    integ_obj['IntegrationResponses'] = integ_responses
+
+                # Always inject a wildcard CORS header into every IntegrationResponse
+                integ_obj['IntegrationResponses'] = [{
+                    'StatusCode': '200',
+                    'ResponseParameters': {
+                        'method.response.header.Access-Control-Allow-Origin': "'*'"
+                    }
+                }]
+
                 method_props['Integration'] = integ_obj
 
             resources_section[method_logical] = {
@@ -168,7 +185,45 @@ def convert_api_to_cfn(api_json):
                 'Properties': method_props
             }
 
-    # Deployment resource (creates the stage inline)
+            # c) Add a CORS OPTIONS method on this same resource
+            options_logical = sanitize_name(
+                api_json['name'] + res['path'].replace('/', '_') + 'OptionsMethod'
+            )
+            options_props = {
+                'RestApiId': {'Ref': api_logical_id},
+                'ResourceId': resource_ref,
+                'HttpMethod': 'OPTIONS',
+                'AuthorizationType': 'NONE',
+                'ApiKeyRequired': False,
+                'Integration': {
+                    'Type': 'MOCK',
+                    'RequestTemplates': {'application/json': '{"statusCode": 200}'},
+                    'IntegrationResponses': [{
+                        'StatusCode': '200',
+                        'ResponseParameters': {
+                            'method.response.header.Access-Control-Allow-Headers': "'Content-Type,Authorization,X-Api-Key,X-Amz-Date,X-Amz-Security-Token'",
+                            'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'",
+                            'method.response.header.Access-Control-Allow-Origin': "'*'"
+                        }
+                    }]
+                },
+                'MethodResponses': [{
+                    'StatusCode': '200',
+                    'ResponseModels': {'application/json': 'Empty'},
+                    'ResponseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': False,
+                        'method.response.header.Access-Control-Allow-Methods': False,
+                        'method.response.header.Access-Control-Allow-Origin': False
+                    }
+                }]
+            }
+            resources_section[options_logical] = {
+                'Type': 'AWS::ApiGateway::Method',
+                'Properties': options_props
+            }
+            method_logical_ids.append(options_logical)
+
+    # 5) Deployment resource, with MethodSettings (no extraneous keys)
     deployment_logical = sanitize_name(api_json['name'] + 'Deployment')
     resources_section[deployment_logical] = {
         'Type': 'AWS::ApiGateway::Deployment',
@@ -179,7 +234,7 @@ def convert_api_to_cfn(api_json):
         }
     }
 
-    # Models
+    # 6) Models
     for model in api_json.get('models', []):
         model_logical = sanitize_name(api_json['name'] + model['name'] + 'Model')
         schema_obj = json.loads(model['schema']) if isinstance(model['schema'], str) else model['schema']
@@ -193,7 +248,7 @@ def convert_api_to_cfn(api_json):
             }
         }
 
-    # Authorizers
+    # 7) Authorizers
     for auth in api_json.get('authorizers', []):
         auth_logical = sanitize_name(api_json['name'] + auth['name'] + 'Authorizer')
         auth_props = {
@@ -209,28 +264,40 @@ def convert_api_to_cfn(api_json):
             auth_props['AuthorizerUri'] = auth['authorizerUri']
         if auth.get('identityValidationExpression'):
             auth_props['IdentityValidationExpression'] = auth['identityValidationExpression']
-        resources_section[auth_logical] = {
-            'Type': 'AWS::ApiGateway::Authorizer',
-            'Properties': auth_props
+        resources_section[auth_logical] = {'Type': 'AWS::ApiGateway::Authorizer', 'Properties': auth_props}
+
+    # 8) Add GatewayResponses (only ResponseParameters allowed)
+    for response_type in ['DEFAULT_4XX', 'DEFAULT_5XX']:
+        gateway_logical = sanitize_name(api_json['name'] + response_type + 'GatewayResponse')
+        resources_section[gateway_logical] = {
+            'Type': 'AWS::ApiGateway::GatewayResponse',
+            'Properties': {
+                'ResponseType': response_type,
+                'RestApiId': {'Ref': api_logical_id},
+                'ResponseParameters': {
+                    'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+                    'gatewayresponse.header.Access-Control-Allow-Headers': "'*'",
+                    'gatewayresponse.header.Access-Control-Allow-Methods': "'*'"
+                },
+                'StatusCode': '200'
+            }
         }
 
     template['Resources'] = resources_section
 
-    # Outputs
+    # 9) Outputs
     template['Outputs'] = OrderedDict({
         'ApiEndpoint': {
             'Description': 'Invoke URL for the deployed API',
-            'Value': {
-                'Fn::Sub': f"https://${{{api_logical_id}}}.execute-api.${{AWS::Region}}.amazonaws.com/{timestamp}"}
+            'Value': {'Fn::Sub': f"https://${{{api_logical_id}}}.execute-api.${{AWS::Region}}.amazonaws.com/{timestamp}"}
         }
     })
 
     return template
 
 # Script entry point
-
-def main():
-    parser = argparse.ArgumentParser(description='Convert API Gateway JSON to CloudFormation template')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Convert API Gateway JSON to CloudFormation template with CORS')
     parser.add_argument('--input', required=True, help='Input JSON file from get-apigw.sh')
     parser.add_argument('--output', required=True, help='Output CloudFormation YAML file')
     args = parser.parse_args()
@@ -246,7 +313,6 @@ def main():
     template = convert_api_to_cfn(api_json)
     plain_template = ordered_to_plain(template)
 
-    # Dump to YAML string, then insert comments for readability
     yaml_str = yaml.safe_dump(plain_template, sort_keys=False)
     yaml_lines = yaml_str.splitlines()
     new_lines = []
@@ -272,6 +338,3 @@ def main():
         out_f.write('\n'.join(new_lines) + '\n')
 
     print(f"CloudFormation template written to {args.output}")
-
-if __name__ == '__main__':
-    main()

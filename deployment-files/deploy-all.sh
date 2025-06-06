@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# deploy-all.sh (updated)
+# deploy-all.sh (updated to include CORS enablement with API_ID extraction)
 #
 # Usage: ./scripts/deploy-all.sh <ENV>
 #
@@ -12,6 +12,7 @@
 #   5. Deploy S3 buckets via s3-template
 #   6. Deploy all Lambda functions
 #   7. Deploy API Gateway stack (ensuring S3 bucket for large templates)
+#   7.5. Enable CORS on all API Gateway resources by looking up API by name, extracting pure ID if needed
 #   8. Update front-end JS with new API endpoint
 #   9. Sync frontend files to S3
 #  10. Print important outputs (Website URL, API ID)
@@ -42,6 +43,8 @@ CORE_TEMPLATE="${TEMPLATE_DIR}/main-template.yaml"
 DYNAMO_TEMPLATE="${TEMPLATE_DIR}/dynamodb-template.yaml"
 S3_TEMPLATE="${TEMPLATE_DIR}/s3-template.yaml"
 API_TEMPLATE="${TEMPLATE_DIR}/api-gateway-template.yaml"
+# New enable CORS script (assumed to be placed in scripts/)
+ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
 echo "🌐 Environment: ${ENV}"
@@ -67,6 +70,11 @@ for script in "${SCRIPTS_DIR}"/*.sh; do
     echo "  • $script"
   fi
 done
+# Ensure the new enable CORS script is executable
+if [[ -f "${ENABLE_CORS_SCRIPT}" ]]; then
+  chmod +x "${ENABLE_CORS_SCRIPT}"
+  echo "  • ${ENABLE_CORS_SCRIPT}"
+fi
 echo
 
 #
@@ -142,6 +150,30 @@ echo "✅ API Gateway Stack deployed."
 echo
 
 #
+# 7️⃣.5️⃣ Enable CORS on API Gateway resources
+#
+# Fetch the REST API ID by name (as it's not output in the CF stack)
+API_NAME="${ENV}Kashishop2API"
+RAW_API_ID=$(aws apigateway get-rest-apis \
+  --query "items[?name=='${API_NAME}'].id" \
+  --output text --region "${REGION}")
+API_ID="${RAW_API_ID}"
+# If RAW_API_ID contains a full URL (starts with https://), extract the pure API ID
+if [[ "${API_ID}" == https://* ]]; then
+  PURE_ID=$(echo "${API_ID}" | sed -E 's|https://([^.]+).*$|\1|')
+  API_ID="${PURE_ID}"
+fi
+
+if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
+  echo "🔧 Enabling CORS on API Gateway resources for API ID: ${API_ID} (stage: ${ENV})"
+  python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
+  echo "✅ CORS enabled on API Gateway resources."
+else
+  echo "⚠️  Skipped CORS enablement: API_ID not found or script missing."
+fi
+echo
+
+#
 # 8️⃣ Update Frontend JS with new API endpoint
 #
 
@@ -176,15 +208,11 @@ if [[ -n "${WEBSITE_URL}" ]]; then
   echo "🌐 Frontend Website URL: ${WEBSITE_URL}"
 fi
 
-# Retrieve API ID from API Stack outputs
-API_ID=$(aws cloudformation describe-stacks \
-  --stack-name "${API_STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiGatewayRestApiId'].OutputValue" \
-  --output text --region "${REGION}")
-
-if [[ -n "${API_ID}" ]]; then
-  echo "🛣️  API Gateway ID: ${API_ID}"
-  echo "   Invoke URL (production stage): https://${API_ID}.execute-api.${REGION}.amazonaws.com/prod"
+# Retrieve API ID (again, for display)
+API_ID_DISPLAY="${API_ID}"
+if [[ -n "${API_ID_DISPLAY}" ]]; then
+  echo "🛣️  API Gateway ID: ${API_ID_DISPLAY}"
+  echo "   Invoke URL (stage: ${ENV}): https://${API_ID_DISPLAY}.execute-api.${REGION}.amazonaws.com/${ENV}"
 fi
 
 echo
