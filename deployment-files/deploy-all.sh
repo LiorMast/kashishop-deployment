@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# deploy-all.sh (updated to deploy Cognito stack)
+# deploy-all.sh (updated to deploy Cognito stack and call external callback updater)
 #
 # Usage: ./deploy-all.sh <ENV>
 #
@@ -12,10 +12,11 @@
 #   5. Deploy S3 buckets
 #   6. Deploy Cognito resources
 #   7. Deploy all Lambda functions
-#   8. Deploy API Gateway stack
-#   8.5 Enable CORS on API Gateway resources
-#   9. Sync frontend files to S3
-#  10. Print important outputs (Frontend URL, API ID)
+#   8. Sync frontend files to S3
+#   9. Update Cognito callback URL via external script
+#  10. Deploy API Gateway stack
+#  11. Enable CORS on API Gateway resources
+#  12. Print Frontend URL
 
 set -euo pipefail
 
@@ -32,80 +33,88 @@ COGNITO_STACK_NAME="${ENV}-kashishop-cognito"
 API_STACK_NAME="${ENV}-kashishop-api"
 TEMPLATE_DIR="$(pwd)/templates"
 SCRIPTS_DIR="$(pwd)/scripts"
-FRONTEND_DIR="$(pwd)/frontend"
 LAMBDA_SCRIPT="${SCRIPTS_DIR}/deploy-lambda.sh"
-UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
-FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
-CORE_TEMPLATE="${TEMPLATE_DIR}/main-template.yaml"
-DYNAMO_TEMPLATE="${TEMPLATE_DIR}/dynamodb-template.yaml"
-S3_TEMPLATE="${TEMPLATE_DIR}/s3-template.yaml"
-COGNITO_TEMPLATE="${TEMPLATE_DIR}/cognito-template.yaml"
-API_TEMPLATE="${TEMPLATE_DIR}/api-gateway-template.yaml"
+UPDATE_COGNITO_SCRIPT="${SCRIPTS_DIR}/update-cognito-callback.sh"
+DEPLOY_FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
 # 1️⃣ AWS Identity & Region/Account Info
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 REGION=$(aws configure get region || echo "us-east-1")
-echo "🚩 Using AWS Account: ${ACCOUNT_ID}, Region: ${REGION}"
+echo "🚩 AWS Account: ${ACCOUNT_ID}, Region: ${REGION}"
 
-echo "🔄 Normalizing helper scripts & making executable..."
+# 2️⃣ Normalize helper scripts & make executable
 for script in "${SCRIPTS_DIR}"/*.sh; do
   [[ -f "$script" ]] || continue
   dos2unix "$script" 2>/dev/null || true
   chmod +x "$script"
-  echo "  • $script"
+  echo "    • $script"
 done
-[[ -f "${ENABLE_CORS_SCRIPT}" ]] && chmod +x "${ENABLE_CORS_SCRIPT}" && echo "  • ${ENABLE_CORS_SCRIPT}"
+[[ -f "${ENABLE_CORS_SCRIPT}" ]] && chmod +x "${ENABLE_CORS_SCRIPT}" && echo "    • ${ENABLE_CORS_SCRIPT}"
 
+# 3️⃣ Deploy Core Stack
 echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
 aws cloudformation deploy \
-  --template-file "${CORE_TEMPLATE}" \
+  --template-file "${TEMPLATE_DIR}/main-template.yaml" \
   --stack-name "${CORE_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "${REGION}"
 echo "✅ Core Stack deployed."
 
-echo "📦 Deploying DynamoDB Tables Stack: ${DYNAMO_STACK_NAME}"
+# 4️⃣ Deploy DynamoDB Stack
+echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
 aws cloudformation deploy \
-  --template-file "${DYNAMO_TEMPLATE}" \
+  --template-file "${TEMPLATE_DIR}/dynamodb-template.yaml" \
   --stack-name "${DYNAMO_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "${REGION}"
-echo "✅ DynamoDB Tables deployed."
+echo "✅ DynamoDB Stack deployed."
 
-echo "📦 Deploying S3 Buckets Stack: ${S3_STACK_NAME}"
+# 5️⃣ Deploy S3 Stack
+echo "📦 Deploying S3 Stack: ${S3_STACK_NAME}"
 aws cloudformation deploy \
-  --template-file "${S3_TEMPLATE}" \
+  --template-file "${TEMPLATE_DIR}/s3-template.yaml" \
   --stack-name "${S3_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "${REGION}"
-echo "✅ S3 Buckets deployed."
+echo "✅ S3 Stack deployed."
 
-# 🚀 Deploying Cognito Stack
+# 6️⃣ Deploy Cognito Stack
 echo "🔐 Deploying Cognito Stack: ${COGNITO_STACK_NAME}"
 aws cloudformation deploy \
-  --template-file "${COGNITO_TEMPLATE}" \
+  --template-file "${TEMPLATE_DIR}/cognito-template.yaml" \
   --stack-name "${COGNITO_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "${REGION}"
 echo "✅ Cognito Stack deployed."
 
-# 🛠️  Deploying Lambda functions...
+# 7️⃣ Deploy Lambda functions
+echo "🛠️ Deploying Lambdas..."
 "${LAMBDA_SCRIPT}" "${ENV}"
 echo "✅ Lambdas deployed."
 
+# 8️⃣ Sync frontend to S3
+echo "🔄 Syncing frontend files to S3..."
+"${DEPLOY_FRONTEND_SCRIPT}" "${ENV}"
+echo "✅ Frontend synced."
+
+# 9️⃣ Update Cognito callback URL
+echo "🔄 Updating Cognito callback URL via external script..."
+"${UPDATE_COGNITO_SCRIPT}" "${ENV}"
+echo "✅ Cognito callback updated."
+
+# 🔟 Deploy API Gateway Stack
 echo "🚀 Deploying API Gateway Stack: ${API_STACK_NAME}"
-# Ensure template bucket exists for large templates
 if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
   aws s3 mb "s3://${TEMPLATE_BUCKET}" --region "${REGION}"
 fi
 aws cloudformation deploy \
-  --template-file "${API_TEMPLATE}" \
+  --template-file "${TEMPLATE_DIR}/api-gateway-template.yaml" \
   --stack-name "${API_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
@@ -113,22 +122,14 @@ aws cloudformation deploy \
   --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ API Gateway Stack deployed."
 
-# 8️⃣.5️⃣ Enable CORS on API Gateway resources
+# 11️⃣ Enable CORS on API Gateway
 API_NAME="${ENV}Kashishop2API"
-RAW_API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
-API_ID="${RAW_API_ID}"
-if [[ "${API_ID}" == https://* ]]; then
-  API_ID=$(echo "${API_ID}" | sed -E 's|https://([^.]+).*$|\1|')
-fi
+API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
 if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
   python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
 fi
 
-echo "🔄 Syncing frontend files to S3..."
-"${FRONTEND_SCRIPT}" "${ENV}"
-echo "✅ Frontend synced."
-
-# 🔟 Construct and print Frontend Website URL from S3 object URL
+# 12️⃣ Print Frontend URL
 BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
   --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucket'].OutputValue" \
@@ -138,4 +139,4 @@ if [[ -n "${BUCKET_NAME}" ]]; then
   echo "🌐 Frontend Website URL: ${FRONTEND_URL}"
 fi
 
-echo "🎉 All resources for '${ENV}' have been provisioned and deployed!"
+ echo "🎉 All resources for '${ENV}' have been provisioned and deployed!"
