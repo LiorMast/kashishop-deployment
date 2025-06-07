@@ -178,7 +178,7 @@ echo
 #
 
 echo "🔄 Updating frontend JS with API endpoint..."
-"${UPDATE_API_SCRIPT}" "${ENV}"
+"${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
 echo "✅ API endpoint updated in global.js."
 echo
 

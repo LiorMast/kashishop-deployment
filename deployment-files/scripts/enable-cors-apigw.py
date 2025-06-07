@@ -17,7 +17,7 @@ REQUEST_TEMPLATES = {
 
 
 def enable_cors_for_resource(api_client, rest_api_id, resource_id):
-    # Create or ensure OPTIONS method and responses
+    # 1) Create or ensure OPTIONS method and its responses
     try:
         api_client.put_method(
             restApiId=rest_api_id,
@@ -62,59 +62,45 @@ def enable_cors_for_resource(api_client, rest_api_id, resource_id):
     except api_client.exceptions.ConflictException:
         pass
 
-    # Patch existing non-OPTIONS methods
+    # 2) Patch existing non-OPTIONS methods
     try:
         resource = api_client.get_resource(restApiId=rest_api_id, resourceId=resource_id)
-    except Exception:
+    except api_client.exceptions.NotFoundException:
         return
 
     for method_name in resource.get('resourceMethods', {}):
         if method_name == 'OPTIONS':
             continue
 
-        # Fetch existing method details to find available status codes
+        # Ensure MethodResponse exists for status 200 with CORS header
         try:
-            method = api_client.get_method(
+            api_client.put_method_response(
                 restApiId=rest_api_id,
                 resourceId=resource_id,
-                httpMethod=method_name
+                httpMethod=method_name,
+                statusCode='200',
+                responseModels={'application/json': 'Empty'},
+                responseParameters={'method.response.header.Access-Control-Allow-Origin': False}
             )
-            existing_responses = method.get('methodResponses', {})
+        except api_client.exceptions.ConflictException:
+            pass
         except api_client.exceptions.NotFoundException:
-            continue
+            pass
 
-        for status_code in existing_responses:
-            # 1) Ensure MethodResponse includes CORS header
-            try:
-                api_client.put_method_response(
-                    restApiId=rest_api_id,
-                    resourceId=resource_id,
-                    httpMethod=method_name,
-                    statusCode=status_code,
-                    responseParameters={
-                        'method.response.header.Access-Control-Allow-Origin': False
-                    }
-                )
-            except api_client.exceptions.ConflictException:
-                pass
-            except api_client.exceptions.NotFoundException:
-                pass
-
-            # 2) Ensure IntegrationResponse includes CORS header
-            try:
-                api_client.put_integration_response(
-                    restApiId=rest_api_id,
-                    resourceId=resource_id,
-                    httpMethod=method_name,
-                    statusCode=status_code,
-                    responseParameters={
-                        'method.response.header.Access-Control-Allow-Origin': CORS_HEADERS['Access-Control-Allow-Origin']
-                    }
-                )
-            except api_client.exceptions.ConflictException:
-                pass
-            except api_client.exceptions.NotFoundException:
-                pass
+        # Ensure IntegrationResponse for status 200 includes CORS header
+        try:
+            api_client.put_integration_response(
+                restApiId=rest_api_id,
+                resourceId=resource_id,
+                httpMethod=method_name,
+                statusCode='200',
+                responseParameters={'method.response.header.Access-Control-Allow-Origin': CORS_HEADERS['Access-Control-Allow-Origin']},
+                responseTemplates={'application/json': ''}
+            )
+        except api_client.exceptions.ConflictException:
+            pass
+        except api_client.exceptions.NotFoundException:
+            pass
 
 
 def main():
