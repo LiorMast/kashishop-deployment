@@ -1,0 +1,247 @@
+# ---------------------- Template Header ----------------------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for AWS Cognito environment
+
+# ---------------------- Parameters ----------------------
+Parameters:
+  EnvPrefix:
+    Type: String
+    Description: Prefix for naming resources (e.g., dev, test, prod)
+    MinLength: 1
+
+# ---------------------- Resources ----------------------
+Resources:
+  KashishopUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName:
+        Fn::Sub: ${EnvPrefix}-Kashishop
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      LambdaConfig:
+        PostConfirmation: arn:aws:lambda:us-east-1:530368666823:function:post_create_user
+      Schema:
+      - Name: profile
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: address
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: birthdate
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '10'
+          MaxLength: '10'
+      - Name: gender
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: preferred_username
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: updated_at
+        AttributeDataType: Number
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        NumberAttributeConstraints:
+          MinValue: '0'
+      - Name: website
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: picture
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: identities
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints: {}
+      - Name: sub
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: false
+        Required: true
+        StringAttributeConstraints:
+          MinLength: '1'
+          MaxLength: '2048'
+      - Name: phone_number
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: phone_number_verified
+        AttributeDataType: Boolean
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+      - Name: zoneinfo
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: locale
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: email
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: email_verified
+        AttributeDataType: Boolean
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+      - Name: given_name
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: family_name
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: middle_name
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: name
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: true
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      - Name: nickname
+        AttributeDataType: String
+        DeveloperOnlyAttribute: false
+        Mutable: true
+        Required: false
+        StringAttributeConstraints:
+          MinLength: '0'
+          MaxLength: '2048'
+      AutoVerifiedAttributes:
+      - email
+      AliasAttributes:
+      - email
+      MfaConfiguration: 'OFF'
+  Kashishop2UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: Kashishop2
+      RefreshTokenValidity: 5
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+      ExplicitAuthFlows:
+      - ALLOW_REFRESH_TOKEN_AUTH
+      - ALLOW_USER_AUTH
+      - ALLOW_USER_SRP_AUTH
+      SupportedIdentityProviders:
+      - COGNITO
+      CallbackURLs:
+      - https://kashishop2.s3.us-east-1.amazonaws.com/main/callback.html
+      AllowedOAuthFlows:
+      - code
+      AllowedOAuthScopes:
+      - email
+      - openid
+      - phone
+      AllowedOAuthFlowsUserPoolClient: true
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      EnablePropagateAdditionalUserContextData: false
+      AuthSessionValidity: 3
+      UserPoolId:
+        Ref: KashishopUserPool
+  AdminsUserPoolGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admins
+      UserPoolId:
+        Ref: KashishopUserPool
+      RoleArn: arn:aws:iam::530368666823:role/LabRole
+
+# ---------------------- Outputs ----------------------
+Outputs:
+  KashishopUserPoolId:
+    Description: ID of KashishopUserPool
+    Value:
+      Ref: KashishopUserPool
+  Kashishop2UserPoolClientId:
+    Description: ID of Kashishop2UserPoolClient
+    Value:
+      Ref: Kashishop2UserPoolClient
+  AdminsUserPoolGroupId:
+    Description: ID of AdminsUserPoolGroup
+    Value:
+      Ref: AdminsUserPoolGroup
