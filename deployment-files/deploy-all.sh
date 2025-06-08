@@ -45,6 +45,8 @@ REGION=$(aws configure get region || echo "us-east-1")
 echo "🚩 AWS Account: ${ACCOUNT_ID}, Region: ${REGION}"
 
 # 2️⃣ Normalize helper scripts & make executable
+echo
+echo " 🛠️ Normalizing helper scripts & making executable:"
 for script in "${SCRIPTS_DIR}"/*.sh; do
   [[ -f "$script" ]] || continue
   dos2unix "$script" 2>/dev/null || true
@@ -53,15 +55,15 @@ for script in "${SCRIPTS_DIR}"/*.sh; do
 done
 [[ -f "${ENABLE_CORS_SCRIPT}" ]] && chmod +x "${ENABLE_CORS_SCRIPT}" && echo "    • ${ENABLE_CORS_SCRIPT}"
 
-# 3️⃣ Deploy Core Stack
-echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
-aws cloudformation deploy \
-  --template-file "${TEMPLATE_DIR}/main-template.yaml" \
-  --stack-name "${CORE_STACK_NAME}" \
-  --parameter-overrides EnvPrefix="${ENV}" \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --region "${REGION}"
-echo "✅ Core Stack deployed."
+# # 3️⃣ Deploy Core Stack
+# echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
+# aws cloudformation deploy \
+#   --template-file "${TEMPLATE_DIR}/main-template.yaml" \
+#   --stack-name "${CORE_STACK_NAME}" \
+#   --parameter-overrides EnvPrefix="${ENV}" \
+#   --capabilities CAPABILITY_NAMED_IAM \
+#   --region "${REGION}"
+# echo "✅ Core Stack deployed."
 
 # 4️⃣ Deploy DynamoDB Stack
 echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
@@ -132,7 +134,7 @@ fi
 # 12️⃣ Print Frontend URL
 BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucket'].OutputValue" \
+  --query "Stacks[0].Outputs[?contains(OutputKey, 'BucketName')].OutputValue | [0]"\
   --output text --region "${REGION}")
 if [[ -n "${BUCKET_NAME}" ]]; then
   FRONTEND_URL="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/main/index.html"

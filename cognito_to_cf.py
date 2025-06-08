@@ -45,21 +45,29 @@ def convert_cognito_to_cfn(cognito_json):
         logical_id = sanitize_name(pool_name) + 'UserPool'
 
         # Build UserPool properties
-        props = OrderedDict({
-            'UserPoolName': {'Fn::Sub': '${EnvPrefix}-' + pool_name}
-        })
-        # Policies
+        props = OrderedDict({'UserPoolName': {'Fn::Sub': '${EnvPrefix}-' + pool_name}})
+        # Policies (PasswordPolicy)
         pwd = details.get('Policies', {}).get('PasswordPolicy')
         if pwd:
+            # Ensure only TemporaryPasswordValidityDays is used
+            pwd.pop('UnusedAccountValidityDays', None)
             props['Policies'] = {'PasswordPolicy': pwd}
         # Lambda triggers
         lambda_cfg = details.get('LambdaConfig')
         if lambda_cfg:
             props['LambdaConfig'] = lambda_cfg
-        # Schema attributes
+        # Schema attributes (filter out names >20 chars)
         schema = details.get('SchemaAttributes')
         if schema:
-            props['Schema'] = schema
+            filtered = []
+            for attr in schema:
+                name = attr.get('Name', '')
+                if len(name) <= 20:
+                    filtered.append(attr)
+                else:
+                    print(f"Warning: Skipping schema attribute '{name}' (length {len(name)})")
+            if filtered:
+                props['Schema'] = filtered
         # Auto-verified attributes
         auto = details.get('AutoVerifiedAttributes')
         if auto:
@@ -72,13 +80,22 @@ def convert_cognito_to_cfn(cognito_json):
         mfa = details.get('MfaConfiguration')
         if mfa:
             props['MfaConfiguration'] = mfa
-        # Add more settings as needed...
+        # Verification message template
+        vmt = details.get('VerificationMessageTemplate')
+        if vmt:
+            props['VerificationMessageTemplate'] = vmt
+        # AdminCreateUserConfig: drop UnusedAccountValidityDays
+        acu = details.get('AdminCreateUserConfig')
+        if acu:
+            acu_filtered = OrderedDict(acu)
+            acu_filtered.pop('UnusedAccountValidityDays', None)
+            props['AdminCreateUserConfig'] = acu_filtered
+        # UsernameConfiguration
+        uc = details.get('UsernameConfiguration')
+        if uc:
+            props['UsernameConfiguration'] = uc
 
-        # Add to resources
-        resources[logical_id] = {
-            'Type': 'AWS::Cognito::UserPool',
-            'Properties': props
-        }
+        resources[logical_id] = {'Type': 'AWS::Cognito::UserPool', 'Properties': props}
 
         # User Pool Clients
         for client in pool.get('clients', []):
@@ -86,15 +103,10 @@ def convert_cognito_to_cfn(cognito_json):
             client_name = cdet.get('ClientName') or client.get('clientId')
             clogical = sanitize_name(client_name) + 'UserPoolClient'
             client_props = OrderedDict(cdet)
-            # Remove read-only fields
             for f in ['LastModifiedDate', 'CreationDate', 'UserPoolId', 'ClientId', 'ClientSecret']:
                 client_props.pop(f, None)
-            # Prefix client name and link to pool
             client_props['UserPoolId'] = {'Ref': logical_id}
-            resources[clogical] = {
-                'Type': 'AWS::Cognito::UserPoolClient',
-                'Properties': client_props
-            }
+            resources[clogical] = {'Type': 'AWS::Cognito::UserPoolClient', 'Properties': client_props}
 
         # Groups
         for group in pool.get('groups', []):
@@ -102,69 +114,49 @@ def convert_cognito_to_cfn(cognito_json):
             group_name = gdet.get('GroupName')
             glogical = sanitize_name(group_name) + 'UserPoolGroup'
             group_props = OrderedDict(gdet)
-            for f in ['CreationDate', 'LastModifiedDate']:
+            for f in ['CreationDate', 'LastModifiedDate', 'RoleArn']:
                 group_props.pop(f, None)
             group_props['UserPoolId'] = {'Ref': logical_id}
-            resources[glogical] = {
-                'Type': 'AWS::Cognito::UserPoolGroup',
-                'Properties': group_props
-            }
+            resources[glogical] = {'Type': 'AWS::Cognito::UserPoolGroup', 'Properties': group_props}
 
         # Identity Providers
         for idp in pool.get('identityProviders', []):
             pname = idp.get('ProviderName')
             idp_logical = sanitize_name(pname) + 'IdP'
             idp_props = OrderedDict(idp)
+            idp_props.pop('ProviderDetails', None)
             idp_props['UserPoolId'] = {'Ref': logical_id}
-            resources[idp_logical] = {
-                'Type': 'AWS::Cognito::UserPoolIdentityProvider',
-                'Properties': idp_props
-            }
+            resources[idp_logical] = {'Type': 'AWS::Cognito::UserPoolIdentityProvider', 'Properties': idp_props}
 
         # Resource Servers
         for server in pool.get('resourceServers', []):
             sid = server.get('Identifier')
             slogical = sanitize_name(sid) + 'ResourceServer'
-            srv_props = OrderedDict({
-                'Identifier': sid,
-                'Name': server.get('Name'),
-                'Scopes': server.get('Scopes', []),
-                'UserPoolId': {'Ref': logical_id}
-            })
-            resources[slogical] = {
-                'Type': 'AWS::Cognito::UserPoolResourceServer',
-                'Properties': srv_props
-            }
+            srv_props = OrderedDict({'Identifier': sid, 'Name': server.get('Name'), 'Scopes': server.get('Scopes', []), 'UserPoolId': {'Ref': logical_id}})
+            resources[slogical] = {'Type': 'AWS::Cognito::UserPoolResourceServer', 'Properties': srv_props}
 
     # Identity Pools
     for ip in cognito_json.get('identityPools', []):
         idet = ip.get('details', {})
         ip_name = idet.get('IdentityPoolName')
         ip_logical = sanitize_name(ip_name) + 'IdentityPool'
-        ip_props = OrderedDict({
-            'IdentityPoolName': {'Fn::Sub': '${EnvPrefix}-' + ip_name},
-            'AllowUnauthenticatedIdentities': idet.get('AllowUnauthenticatedIdentities', False)
-        })
+        ip_props = OrderedDict({'IdentityPoolName': {'Fn::Sub': '${EnvPrefix}-' + ip_name}, 'AllowUnauthenticatedIdentities': idet.get('AllowUnauthenticatedIdentities', False)})
         logins = idet.get('SupportedLoginProviders')
         if logins:
             ip_props['SupportedLoginProviders'] = logins
-        role_maps = ip.get('roles', {}).get('RoleMappings')
-        if role_maps:
-            ip_props['RoleMappings'] = role_maps
-        resources[ip_logical] = {
-            'Type': 'AWS::Cognito::IdentityPool',
-            'Properties': ip_props
-        }
+        resources[ip_logical] = {'Type': 'AWS::Cognito::IdentityPool', 'Properties': ip_props}
+
+        # Attach default role via IdentityPoolRoleAttachment
+        att_logical = ip_logical + 'RoleAttachment'
+        att_props = OrderedDict({'IdentityPoolId': {'Ref': ip_logical}, 'Roles': {'authenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}, 'unauthenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}}})
+        resources[att_logical] = {'Type': 'AWS::Cognito::IdentityPoolRoleAttachment', 'Properties': att_props}
 
     template['Resources'] = resources
 
     # Outputs
     outputs = OrderedDict()
     for key in resources:
-        outputs[key + 'Id'] = {
-            'Description': f"ID of {key}",
-            'Value': {'Ref': key}
-        }
+        outputs[key + 'Id'] = {'Description': f"ID of {key}", 'Value': {'Ref': key}}
     template['Outputs'] = outputs
 
     return template

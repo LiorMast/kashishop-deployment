@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
+      updateUI();
     });
 
   const renderItems = async () => {
@@ -122,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (error) {
       console.error("Error fetching pending items:", error);
-      itemsContainer.innerHTML = `<p class="error-message">Failed to load items. Please try again later.</p>`;
+      itemsContainer.innerHTML = `<p class="error-message">No Items To Display.</p>`;
     }
   };
 

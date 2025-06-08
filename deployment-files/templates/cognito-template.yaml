@@ -112,11 +112,6 @@ Resources:
         StringAttributeConstraints:
           MinLength: '0'
           MaxLength: '2048'
-      - Name: phone_number_verified
-        AttributeDataType: Boolean
-        DeveloperOnlyAttribute: false
-        Mutable: true
-        Required: false
       - Name: zoneinfo
         AttributeDataType: String
         DeveloperOnlyAttribute: false
@@ -191,6 +186,12 @@ Resources:
       AliasAttributes:
       - email
       MfaConfiguration: 'OFF'
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      UsernameConfiguration:
+        CaseSensitive: false
   Kashishop2UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -229,7 +230,6 @@ Resources:
       GroupName: Admins
       UserPoolId:
         Ref: KashishopUserPool
-      RoleArn: arn:aws:iam::530368666823:role/LabRole
 
 # ---------------------- Outputs ----------------------
 Outputs:
