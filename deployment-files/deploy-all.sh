@@ -35,6 +35,7 @@ TEMPLATE_DIR="$(pwd)/templates"
 SCRIPTS_DIR="$(pwd)/scripts"
 LAMBDA_SCRIPT="${SCRIPTS_DIR}/deploy-lambda.sh"
 UPDATE_COGNITO_SCRIPT="${SCRIPTS_DIR}/update-cognito-callback.sh"
+UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
 DEPLOY_FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
@@ -100,11 +101,6 @@ echo "🛠️ Deploying Lambdas..."
 "${LAMBDA_SCRIPT}" "${ENV}"
 echo "✅ Lambdas deployed."
 
-# 8️⃣ Sync frontend to S3
-echo "🔄 Syncing frontend files to S3..."
-"${DEPLOY_FRONTEND_SCRIPT}" "${ENV}"
-echo "✅ Frontend synced."
-
 # 9️⃣ Update Cognito callback URL
 echo "🔄 Updating Cognito callback URL via external script..."
 "${UPDATE_COGNITO_SCRIPT}" "${ENV}"
@@ -130,6 +126,20 @@ API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" -
 if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
   python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
 fi
+
+#
+# 8️⃣ Update Frontend JS with new API endpoint
+#
+
+echo "🔄 Updating frontend JS with API endpoint..."
+"${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
+echo "✅ API endpoint updated in global.js."
+echo
+
+# 8️⃣ Sync frontend to S3
+echo "🔄 Syncing frontend files to S3..."
+"${DEPLOY_FRONTEND_SCRIPT}" "${ENV}"
+echo "✅ Frontend synced."
 
 # 12️⃣ Print Frontend URL
 BUCKET_NAME=$(aws cloudformation describe-stacks \
