@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #
 # This script exports all Cognito User Pools and Identity Pools (with full details)
-# into a single JSON file named “cognito_full.json.”
-# Debug prints now go to stderr so as not to corrupt the JSON on stdout.
+# plus Hosted UI domain & branding configuration into a single JSON file named “cognito_full.json.”
 #
 # Prerequisites:
 #  • AWS CLI v2 (configured with credentials & region)
@@ -23,51 +22,31 @@ echo >&2
 
 # 1. Start the top‐level JSON object with "userPools"
 printf '{\n  "userPools": [' > "$OUTPUT"
-echo "Initialized output file with userPools array." >&2
 
 first_pool=true
 
-# 2. List all User Pools (paginated; --max-results ≤ 60)
-echo "Fetching list of User Pools..." >&2
+# 2. List all User Pools
 POOL_LIST_JSON=$(aws cognito-idp list-user-pools --max-results 60 --output json)
-echo "Raw list-user-pools response:" >&2
-echo "$POOL_LIST_JSON" | jq . 2>/dev/null >&2 || echo "(could not parse JSON)" >&2
-echo >&2
 
-echo "Iterating over each User Pool..." >&2
 echo "$POOL_LIST_JSON" \
   | jq -r '.UserPools[] | "\(.Id):::\(.Name)"' \
   | while IFS=":::" read -r POOL_ID POOL_NAME; do
-    echo "----------------------------------------------" >&2
-    echo "Processing User Pool: ID=$POOL_ID, Name=$POOL_NAME" >&2
 
-    #
     # 2.1 Describe the pool
-    #
-    echo "  -> Describing User Pool $POOL_ID..." >&2
     POOL_DESC=$(aws cognito-idp describe-user-pool \
                    --user-pool-id "$POOL_ID" \
                    --output json \
                | jq '.UserPool')
-    echo "  Retrieved describe-user-pool for $POOL_ID." >&2
 
-    #
-    # 2.2 Collect all App Clients for this pool
-    #
-    echo "  -> Listing App Clients for Pool $POOL_ID..." >&2
+    # 2.2 Collect App Clients (unchanged)…
     CLIENT_IDS=$(aws cognito-idp list-user-pool-clients \
                    --user-pool-id "$POOL_ID" \
                    --max-results 60 \
                    --output json \
                  | jq -r '.UserPoolClients[].ClientId' || echo "")
-    echo "  Found client IDs: $CLIENT_IDS" >&2
-
     if [ -n "$CLIENT_IDS" ]; then
-      echo "    Describing each App Client..." >&2
-      # Capture only the JSON lines; debug prints go to stderr
       ALL_CLIENTS_JSON=$(
         for CID in $CLIENT_IDS; do
-          echo "      • describe-user-pool-client for client $CID" >&2
           aws cognito-idp describe-user-pool-client \
             --user-pool-id "$POOL_ID" \
             --client-id "$CID" \
@@ -75,27 +54,18 @@ echo "$POOL_LIST_JSON" \
           | jq -c --arg clientId "$CID" '{ clientId: $clientId, details: .UserPoolClient }'
         done | jq -s '.'
       )
-      echo "    Completed describing all App Clients." >&2
     else
-      echo "    No App Clients found for Pool $POOL_ID." >&2
       ALL_CLIENTS_JSON="[]"
     fi
 
-    #
-    # 2.3 Collect all Groups for this pool
-    #
-    echo "  -> Listing Groups for Pool $POOL_ID..." >&2
+    # 2.3 Collect Groups (unchanged)…
     GROUP_NAMES=$(aws cognito-idp list-groups \
                     --user-pool-id "$POOL_ID" \
                     --output json \
                   | jq -r '.Groups[].GroupName' || echo "")
-    echo "  Found group names: $GROUP_NAMES" >&2
-
     if [ -n "$GROUP_NAMES" ]; then
-      echo "    Fetching details for each Group..." >&2
       ALL_GROUPS_JSON=$(
         for G in $GROUP_NAMES; do
-          echo "      • get-group for group $G" >&2
           aws cognito-idp get-group \
             --user-pool-id "$POOL_ID" \
             --group-name "$G" \
@@ -103,40 +73,46 @@ echo "$POOL_LIST_JSON" \
           | jq -c --arg groupName "$G" '{ groupName: $groupName, details: .Group }'
         done | jq -s '.'
       )
-      echo "    Completed fetching group details." >&2
     else
-      echo "    No Groups found for Pool $POOL_ID." >&2
       ALL_GROUPS_JSON="[]"
     fi
 
-    #
-    # 2.4 List all Identity Providers configured on this User Pool
-    #
-    echo "  -> Listing Identity Providers for Pool $POOL_ID..." >&2
+    # 2.4 Identity Providers (unchanged)…
     IDP_LIST=$(aws cognito-idp list-identity-providers \
                  --user-pool-id "$POOL_ID" \
                  --max-results 60 \
                  --output json \
                | jq '.Providers' || echo "[]")
-    echo "  Identity Providers for $POOL_ID:" >&2
-    echo "$IDP_LIST" | jq . 2>/dev/null >&2 || echo "(could not parse JSON)" >&2
 
-    #
-    # 2.5 List all Resource Servers (custom OAuth scopes) for this pool
-    #
-    echo "  -> Listing Resource Servers for Pool $POOL_ID..." >&2
+    # 2.5 Resource Servers (unchanged)…
     RS_LIST=$(aws cognito-idp list-resource-servers \
                 --user-pool-id "$POOL_ID" \
                 --max-results 50 \
                 --output json \
               | jq '.ResourceServers' || echo "[]")
-    echo "  Resource Servers for $POOL_ID:" >&2
-    echo "$RS_LIST" | jq . 2>/dev/null >&2 || echo "(could not parse JSON)" >&2
 
-    #
-    # 2.6 Build a single JSON object for this User Pool
-    #
-    echo "  -> Building JSON object for Pool $POOL_ID..." >&2
+    # ────────────────────────────────────────────────────────────
+    # 2.6 NEW: Describe Hosted UI Domain Configuration
+    # ────────────────────────────────────────────────────────────
+    DOMAIN_PREFIX=$(echo "$POOL_DESC" | jq -r '.Domain // empty')
+    if [ -n "$DOMAIN_PREFIX" ] && [ "$DOMAIN_PREFIX" != "null" ]; then
+      DOMAIN_DESC=$(aws cognito-idp describe-user-pool-domain \
+                     --domain "$DOMAIN_PREFIX" \
+                     --output json \
+                   | jq '.DomainDescription')
+    else
+      DOMAIN_DESC="null"
+    fi
+
+    # ────────────────────────────────────────────────────────────
+    # 2.7 NEW: Get Hosted UI (classic) Branding CSS & Logo
+    # ────────────────────────────────────────────────────────────
+    UI_CUSTOM=$(aws cognito-idp get-ui-customization \
+                  --user-pool-id "$POOL_ID" \
+                  --output json \
+                | jq '.UICustomization // {}')
+
+    # 2.8 Build the JSON object for this pool (extended)
     POOL_OBJ=$(jq -n \
       --arg id "$POOL_ID" \
       --arg name "$POOL_NAME" \
@@ -145,36 +121,32 @@ echo "$POOL_LIST_JSON" \
       --argjson groups "$ALL_GROUPS_JSON" \
       --argjson idps "$IDP_LIST" \
       --argjson rservers "$RS_LIST" \
+      --argjson domain "$DOMAIN_DESC" \
+      --argjson ui "$UI_CUSTOM" \
       '{
-         poolId:            $id,
-         poolName:          $name,
-         details:           $details,
-         clients:           $clients,
-         groups:            $groups,
-         identityProviders: $idps,
-         resourceServers:   $rservers
+         poolId:              $id,
+         poolName:            $name,
+         details:             $details,
+         clients:             $clients,
+         groups:              $groups,
+         identityProviders:   $idps,
+         resourceServers:     $rservers,
+         hostedUIDomain:      $domain,
+         uiCustomization:     $ui
        }'
     )
-    echo "  JSON object for Pool $POOL_ID built successfully." >&2
 
-    #
-    # 2.7 Append this object into the "userPools" array
-    #
+    # 2.9 Append into output
     if [ "$first_pool" = true ]; then
       printf "\n    %s" "$POOL_OBJ" >> "$OUTPUT"
       first_pool=false
-      echo "  Appended first pool object." >&2
     else
       printf ",\n    %s" "$POOL_OBJ" >> "$OUTPUT"
-      echo "  Appended subsequent pool object." >&2
     fi
 
-    echo "Finished processing Pool $POOL_ID." >&2
-    echo "----------------------------------------------" >&2
-    echo >&2
   done
 
-# 3. Close the userPools array and start "identityPools"
+# 3. Close userPools and proceed with identityPools (unchanged)…
 printf "\n  ],\n  \"identityPools\": [" >> "$OUTPUT"
 echo "Closed userPools array. Starting identityPools array." >&2
 
