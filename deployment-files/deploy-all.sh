@@ -88,13 +88,20 @@ echo "✅ S3 Stack deployed."
 
 # 6️⃣ Deploy Cognito Stack
 echo "🔐 Deploying Cognito Stack: ${COGNITO_STACK_NAME}"
+# — ensure the template bucket exists
+if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
+  aws s3 mb "s3://${TEMPLATE_BUCKET}" --region "${REGION}"
+fi
+# — deploy via S3 to work around the 51 200 byte limit
 aws cloudformation deploy \
   --template-file "${TEMPLATE_DIR}/cognito-template.yaml" \
   --stack-name "${COGNITO_STACK_NAME}" \
   --parameter-overrides EnvPrefix="${ENV}" \
   --capabilities CAPABILITY_NAMED_IAM \
-  --region "${REGION}"
+  --region "${REGION}" \
+  --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ Cognito Stack deployed."
+
 
 # 7️⃣ Deploy Lambda functions
 echo "🛠️ Deploying Lambdas..."

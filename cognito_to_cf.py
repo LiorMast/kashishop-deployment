@@ -4,13 +4,11 @@ import re
 import argparse
 from collections import OrderedDict
 
-# Helper to sanitize names for CloudFormation logical IDs
-# Removes non-alphanumeric characters and capitalizes each part
 def sanitize_name(name):
     parts = re.split(r'[^0-9a-zA-Z]+', name)
-    return ''.join([part.capitalize() for part in parts if part])
+    return ''.join(p.capitalize() for p in parts if p)
 
-# Recursively convert OrderedDict to plain dicts for YAML serialization
+
 def ordered_to_plain(obj):
     if isinstance(obj, OrderedDict):
         obj = dict(obj)
@@ -20,186 +18,202 @@ def ordered_to_plain(obj):
         return [ordered_to_plain(v) for v in obj]
     return obj
 
-# Main conversion function for Cognito JSON
+
+def unwrap(item):
+    # Flatten export lists of single elements
+    if isinstance(item, list):
+        return item[0] if item else None
+    return item
+
+
 def convert_cognito_to_cfn(cognito_json):
-    template = OrderedDict()
-    # Template header
-    template['AWSTemplateFormatVersion'] = '2010-09-09'
-    template['Description'] = 'CloudFormation template for AWS Cognito environment'
-
-    # Parameters
-    template['Parameters'] = OrderedDict({
-        'EnvPrefix': {
-            'Type': 'String',
-            'Description': 'Prefix for naming resources (e.g., dev, test, prod)',
-            'MinLength': 1
-        }
-    })
-
+    template = OrderedDict(
+        AWSTemplateFormatVersion='2010-09-09',
+        Description='CloudFormation template for AWS Cognito environment',
+        Parameters=OrderedDict({
+            'EnvPrefix': {
+                'Type': 'String',
+                'Description': 'Prefix for naming resources (e.g., dev, test, prod)',
+                'MinLength': 1
+            }
+        })
+    )
     resources = OrderedDict()
 
-    # User Pools
+    # --- User Pools + related resources ---
     for pool in cognito_json.get('userPools', []):
         details = pool.get('details', {})
         pool_name = details.get('Name') or pool.get('poolName')
-        logical_id = sanitize_name(pool_name) + 'UserPool'
+        pool_logical = sanitize_name(pool_name) + 'UserPool'
 
-        # Build UserPool properties
-        props = OrderedDict({'UserPoolName': {'Fn::Sub': '${EnvPrefix}-' + pool_name}})
-        # Policies (PasswordPolicy)
-        pwd = details.get('Policies', {}).get('PasswordPolicy')
-        if pwd:
-            # Ensure only TemporaryPasswordValidityDays is used
-            pwd.pop('UnusedAccountValidityDays', None)
-            props['Policies'] = {'PasswordPolicy': pwd}
-        # Lambda triggers
-        lambda_cfg = details.get('LambdaConfig')
-        if lambda_cfg:
-            props['LambdaConfig'] = lambda_cfg
-        # Schema attributes (filter out names >20 chars)
-        schema = details.get('SchemaAttributes')
-        if schema:
-            filtered = []
-            for attr in schema:
-                name = attr.get('Name', '')
-                if len(name) <= 20:
-                    filtered.append(attr)
-                else:
-                    print(f"Warning: Skipping schema attribute '{name}' (length {len(name)})")
-            if filtered:
-                props['Schema'] = filtered
-        # Auto-verified attributes
-        auto = details.get('AutoVerifiedAttributes')
-        if auto:
-            props['AutoVerifiedAttributes'] = auto
-        # Alias attributes
-        alias = details.get('AliasAttributes')
-        if alias:
-            props['AliasAttributes'] = alias
-        # MFA configuration
-        mfa = details.get('MfaConfiguration')
-        if mfa:
-            props['MfaConfiguration'] = mfa
-        # Verification message template
-        vmt = details.get('VerificationMessageTemplate')
-        if vmt:
-            props['VerificationMessageTemplate'] = vmt
-        # AdminCreateUserConfig: drop UnusedAccountValidityDays
-        acu = details.get('AdminCreateUserConfig')
-        if acu:
-            acu_filtered = OrderedDict(acu)
-            acu_filtered.pop('UnusedAccountValidityDays', None)
-            props['AdminCreateUserConfig'] = acu_filtered
-        # UsernameConfiguration
-        uc = details.get('UsernameConfiguration')
-        if uc:
-            props['UsernameConfiguration'] = uc
+        # 1) Cognito User Pool
+        up_props = OrderedDict({
+            'UserPoolName': {'Fn::Sub': '${EnvPrefix}-' + pool_name}
+        })
+        if pp := details.get('Policies', {}).get('PasswordPolicy'):
+            pp.pop('UnusedAccountValidityDays', None)
+            up_props['Policies'] = {'PasswordPolicy': pp}
+        for key in ('LambdaConfig','AutoVerifiedAttributes','AliasAttributes',
+                    'MfaConfiguration','VerificationMessageTemplate',
+                    'UsernameConfiguration'):
+            if val := details.get(key):
+                up_props[key] = val
+        if schema := details.get('SchemaAttributes'):
+            filtered = [a for a in schema if len(a.get('Name',''))<=20]
+            if filtered: up_props['Schema'] = filtered
+        if acu := details.get('AdminCreateUserConfig'):
+            acu2 = OrderedDict(acu); acu2.pop('UnusedAccountValidityDays',None)
+            up_props['AdminCreateUserConfig'] = acu2
 
-        resources[logical_id] = {'Type': 'AWS::Cognito::UserPool', 'Properties': props}
+        resources[pool_logical] = {
+            'Type': 'AWS::Cognito::UserPool',
+            'Properties': up_props
+        }
 
-        # User Pool Clients
-        for client in pool.get('clients', []):
-            cdet = client.get('details', {})
-            client_name = cdet.get('ClientName') or client.get('clientId')
-            clogical = sanitize_name(client_name) + 'UserPoolClient'
-            client_props = OrderedDict(cdet)
-            for f in ['LastModifiedDate', 'CreationDate', 'UserPoolId', 'ClientId', 'ClientSecret']:
-                client_props.pop(f, None)
-            client_props['UserPoolId'] = {'Ref': logical_id}
-            resources[clogical] = {'Type': 'AWS::Cognito::UserPoolClient', 'Properties': client_props}
+        # 2) App Clients
+        for client_entry in pool.get('clients', []):
+            client = unwrap(client_entry)
+            if not client: continue
+            c = client.get('details', {})
+            name = c.get('ClientName') or client.get('clientId')
+            clog = sanitize_name(name) + 'UserPoolClient'
+            cp = OrderedDict(c)
+            for drop in ('LastModifiedDate','CreationDate','UserPoolId','ClientId','ClientSecret'):
+                cp.pop(drop, None)
+            cp['UserPoolId'] = {'Ref': pool_logical}
+            resources[clog] = {
+                'Type': 'AWS::Cognito::UserPoolClient',
+                'Properties': cp
+            }
 
-        # Groups
-        for group in pool.get('groups', []):
-            gdet = group.get('details', {})
-            group_name = gdet.get('GroupName')
-            glogical = sanitize_name(group_name) + 'UserPoolGroup'
-            group_props = OrderedDict(gdet)
-            for f in ['CreationDate', 'LastModifiedDate', 'RoleArn']:
-                group_props.pop(f, None)
-            group_props['UserPoolId'] = {'Ref': logical_id}
-            resources[glogical] = {'Type': 'AWS::Cognito::UserPoolGroup', 'Properties': group_props}
+        # 3) Groups
+        for group_entry in pool.get('groups', []):
+            group = unwrap(group_entry)
+            if not group: continue
+            g = group.get('details', {})
+            gl = sanitize_name(g['GroupName']) + 'UserPoolGroup'
+            gp = OrderedDict(g)
+            # Remove extraneous keys
+            for drop in ('RoleArn', 'LastModifiedDate', 'CreationDate'):
+                gp.pop(drop, None)
+            gp['UserPoolId'] = {'Ref': pool_logical}
+            resources[gl] = {
+                'Type': 'AWS::Cognito::UserPoolGroup',
+                'Properties': gp
+            }
 
-        # Identity Providers
-        for idp in pool.get('identityProviders', []):
-            pname = idp.get('ProviderName')
-            idp_logical = sanitize_name(pname) + 'IdP'
-            idp_props = OrderedDict(idp)
-            idp_props.pop('ProviderDetails', None)
-            idp_props['UserPoolId'] = {'Ref': logical_id}
-            resources[idp_logical] = {'Type': 'AWS::Cognito::UserPoolIdentityProvider', 'Properties': idp_props}
+        # 4) Identity Providers
+        for idp_entry in pool.get('identityProviders', []):
+            idp0 = unwrap(idp_entry)
+            if not idp0: continue
+            pname = idp0['ProviderName']; il = sanitize_name(pname) + 'IdP'
+            ip = OrderedDict(idp0); ip.pop('ProviderDetails', None)
+            ip['UserPoolId'] = {'Ref': pool_logical}
+            resources[il] = {
+                'Type': 'AWS::Cognito::UserPoolIdentityProvider',
+                'Properties': ip
+            }
 
-        # Resource Servers
-        for server in pool.get('resourceServers', []):
-            sid = server.get('Identifier')
-            slogical = sanitize_name(sid) + 'ResourceServer'
-            srv_props = OrderedDict({'Identifier': sid, 'Name': server.get('Name'), 'Scopes': server.get('Scopes', []), 'UserPoolId': {'Ref': logical_id}})
-            resources[slogical] = {'Type': 'AWS::Cognito::UserPoolResourceServer', 'Properties': srv_props}
+        # 5) Resource Servers
+        for srv_entry in pool.get('resourceServers', []):
+            srv0 = unwrap(srv_entry)
+            if not srv0: continue
+            sid = srv0['Identifier']; sl = sanitize_name(sid) + 'ResourceServer'
+            sp = OrderedDict({
+                'Identifier': sid,
+                'Name': srv0.get('Name'),
+                'Scopes': srv0.get('Scopes', []),
+                'UserPoolId': {'Ref': pool_logical}
+            })
+            resources[sl] = {
+                'Type': 'AWS::Cognito::UserPoolResourceServer',
+                'Properties': sp
+            }
 
-    # Identity Pools
+        # 6) Managed Login Branding
+        for ml_entry in pool.get('managedLoginBranding', []):
+            entry = unwrap(ml_entry)
+            if not entry: continue
+            cid = entry.get('clientId')
+            m = entry.get('managedLoginBranding', {})
+            mlog = sanitize_name(pool_name + cid) + 'ManagedLoginBranding'
+            ml_props = OrderedDict({
+                'UserPoolId': {'Ref': pool_logical},
+                'ClientId': cid,
+                'UseCognitoProvidedValues': m.get('UseCognitoProvidedValues', False),
+                'Settings': m.get('Settings', {}),
+                'Assets': m.get('Assets', []),
+                'ReturnMergedResources': False
+            })
+            resources[mlog] = {
+                'Type': 'AWS::Cognito::ManagedLoginBranding',
+                'Properties': ml_props
+            }
+
+    # --- Identity Pools & Attachments ---
     for ip in cognito_json.get('identityPools', []):
-        idet = ip.get('details', {})
-        ip_name = idet.get('IdentityPoolName')
-        ip_logical = sanitize_name(ip_name) + 'IdentityPool'
-        ip_props = OrderedDict({'IdentityPoolName': {'Fn::Sub': '${EnvPrefix}-' + ip_name}, 'AllowUnauthenticatedIdentities': idet.get('AllowUnauthenticatedIdentities', False)})
-        logins = idet.get('SupportedLoginProviders')
-        if logins:
-            ip_props['SupportedLoginProviders'] = logins
-        resources[ip_logical] = {'Type': 'AWS::Cognito::IdentityPool', 'Properties': ip_props}
+        d = ip['details']; name = d['IdentityPoolName']
+        ilog = sanitize_name(name) + 'IdentityPool'
+        iprops = OrderedDict({
+            'IdentityPoolName': {'Fn::Sub': '${EnvPrefix}-' + name},
+            'AllowUnauthenticatedIdentities': d.get('AllowUnauthenticatedIdentities', False)
+        })
+        if lp := d.get('SupportedLoginProviders'):
+            iprops['SupportedLoginProviders'] = lp
+        resources[ilog] = {'Type':'AWS::Cognito::IdentityPool','Properties': iprops}
 
-        # Attach default role via IdentityPoolRoleAttachment
-        att_logical = ip_logical + 'RoleAttachment'
-        att_props = OrderedDict({'IdentityPoolId': {'Ref': ip_logical}, 'Roles': {'authenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}, 'unauthenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}}})
-        resources[att_logical] = {'Type': 'AWS::Cognito::IdentityPoolRoleAttachment', 'Properties': att_props}
+        att = OrderedDict({
+            'IdentityPoolId': {'Ref': ilog},
+            'Roles': {
+                'authenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'},
+                'unauthenticated': {'Fn::Sub': 'arn:aws:iam::${AWS::AccountId}:role/LabRole'}
+            }
+        })
+        resources[ilog + 'RoleAttachment'] = {
+            'Type': 'AWS::Cognito::IdentityPoolRoleAttachment',
+            'Properties': att
+        }
 
     template['Resources'] = resources
 
     # Outputs
-    outputs = OrderedDict()
+    outs = OrderedDict()
     for key in resources:
-        outputs[key + 'Id'] = {'Description': f"ID of {key}", 'Value': {'Ref': key}}
-    template['Outputs'] = outputs
+        outs[key + 'Id'] = {'Description': f"ID of {key}", 'Value': {'Ref': key}}
+    template['Outputs'] = outs
 
     return template
 
-# Script entry point
+
 def main():
-    parser = argparse.ArgumentParser(description='Convert Cognito JSON to CloudFormation template')
-    parser.add_argument('--input', required=True, help='Input JSON file from get-cognito.sh')
-    parser.add_argument('--output', required=True, help='Output CloudFormation YAML file')
-    args = parser.parse_args()
+    p = argparse.ArgumentParser(description='Convert Cognito JSON to CFN')
+    p.add_argument('--input', required=True, help='export JSON from get-cognito.sh')
+    p.add_argument('--output', required=True, help='destination CFN YAML file')
+    args = p.parse_args()
 
-    with open(args.input, 'r') as f:
-        cognito_json = json.load(f)
+    with open(args.input) as f:
+        cj = json.load(f)
+    tpl = convert_cognito_to_cfn(cj)
+    plain = ordered_to_plain(tpl)
 
-    template = convert_cognito_to_cfn(cognito_json)
-    plain = ordered_to_plain(template)
-
-    # Dump to YAML and insert comments
-    yaml_str = yaml.safe_dump(plain, sort_keys=False)
-    lines = yaml_str.splitlines()
-    new_lines = []
-    for line in lines:
-        if line.startswith('AWSTemplateFormatVersion'):
-            new_lines.append('# ---------------------- Template Header ----------------------')
-            new_lines.append(line)
-        elif line.startswith('Description'):
-            new_lines.append(line)
-        elif line.startswith('Parameters:'):
-            new_lines.append('\n# ---------------------- Parameters ----------------------')
-            new_lines.append(line)
-        elif line.startswith('Resources:'):
-            new_lines.append('\n# ---------------------- Resources ----------------------')
-            new_lines.append(line)
-        elif line.startswith('Outputs:'):
-            new_lines.append('\n# ---------------------- Outputs ----------------------')
-            new_lines.append(line)
+    # emit YAML with comments
+    y = yaml.safe_dump(plain, sort_keys=False)
+    lines, out = y.splitlines(), []
+    for L in lines:
+        if L.startswith('AWSTemplateFormatVersion'):
+            out += ['# ----- Template Header -----', L]
+        elif L.startswith('Parameters:'):
+            out += ['# ----- Parameters -----', L]
+        elif L.startswith('Resources:'):
+            out += ['# ----- Resources -----', L]
+        elif L.startswith('Outputs:'):
+            out += ['# ----- Outputs -----', L]
         else:
-            new_lines.append(line)
+            out.append(L)
 
-    with open(args.output, 'w') as out_f:
-        out_f.write('\n'.join(new_lines) + '\n')
-
-    print(f"CloudFormation template written to {args.output}")
+    with open(args.output, 'w') as w:
+        w.write(''.join(out) + '')
+    print(f"⛅ CloudFormation template written to {args.output}")
 
 if __name__ == '__main__':
     main()
