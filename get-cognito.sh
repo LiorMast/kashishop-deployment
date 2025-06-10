@@ -111,30 +111,52 @@ echo "$POOL_LIST_JSON" \
                   --user-pool-id "$POOL_ID" \
                   --output json \
                 | jq '.UICustomization // {}')
+        # ────────────────────────────────────────────────────────────
+    # 2.8 NEW: Collect Managed Login Branding per App Client
+    # ────────────────────────────────────────────────────────────
+    if [ -n "$CLIENT_IDS" ]; then
+      ALL_MANAGED_BRANDING_JSON=$(
+        for CID in $CLIENT_IDS; do
+          aws cognito-idp describe-managed-login-branding-by-client \
+            --user-pool-id "$POOL_ID" \
+            --client-id "$CID" \
+            --return-merged-resources \
+            --output json \
+          | jq -c --arg clientId "$CID" '{ clientId: $clientId, managedLoginBranding: .ManagedLoginBranding }'
+        done | jq -s '.'
+      )
+    else
+      ALL_MANAGED_BRANDING_JSON="[]"
+    fi
 
-    # 2.8 Build the JSON object for this pool (extended)
-    POOL_OBJ=$(jq -n \
-      --arg id "$POOL_ID" \
-      --arg name "$POOL_NAME" \
-      --argjson details "$POOL_DESC" \
-      --argjson clients "$ALL_CLIENTS_JSON" \
-      --argjson groups "$ALL_GROUPS_JSON" \
-      --argjson idps "$IDP_LIST" \
-      --argjson rservers "$RS_LIST" \
-      --argjson domain "$DOMAIN_DESC" \
-      --argjson ui "$UI_CUSTOM" \
-      '{
-         poolId:              $id,
-         poolName:            $name,
-         details:             $details,
-         clients:             $clients,
-         groups:              $groups,
-         identityProviders:   $idps,
-         resourceServers:     $rservers,
-         hostedUIDomain:      $domain,
-         uiCustomization:     $ui
-       }'
-    )
+    # ────────────────────────────────────────────────────────────
+    # 2.8 Build the JSON object for this pool (extended, using slurpfiles)
+    # ────────────────────────────────────────────────────────────
+   POOL_OBJ=$(jq -n \
+     --arg id "$POOL_ID" \
+     --arg name "$POOL_NAME" \
+     --slurpfile details <(printf '%s' "$POOL_DESC") \
+     --slurpfile clients <(printf '%s' "$ALL_CLIENTS_JSON") \
+     --slurpfile groups  <(printf '%s' "$ALL_GROUPS_JSON") \
+     --slurpfile idps    <(printf '%s' "$IDP_LIST") \
+     --slurpfile rservrs <(printf '%s' "$RS_LIST") \
+     --slurpfile domain  <(printf '%s' "$DOMAIN_DESC") \
+     --slurpfile ui      <(printf '%s' "$UI_CUSTOM") \
+     --slurpfile branding <(printf '%s' "$ALL_MANAGED_BRANDING_JSON") \
+     '{
+        poolId:             $id,
+        poolName:           $name,
+        details:            $details[0],
+        clients:            $clients,
+        groups:             $groups,
+        identityProviders:  $idps,
+        resourceServers:    $rservrs,
+        hostedUIDomain:     $domain[0],
+        uiCustomization:    $ui[0],
+        managedLoginBranding:$branding
+      }'
+   )
+
 
     # 2.9 Append into output
     if [ "$first_pool" = true ]; then
