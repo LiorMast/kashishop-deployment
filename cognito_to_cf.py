@@ -124,6 +124,13 @@ def convert_cognito_to_cfn(cognito_json):
             for drop in ('LastModifiedDate', 'CreationDate', 'UserPoolId', 'ClientId', 'ClientSecret'):
                 cp.pop(drop, None)
             cp['UserPoolId'] = {'Ref': pool_logical}
+            
+            # --- FIX: Ensure the UserPoolClient is enabled for OAuth flows ---
+            # If the source client has AllowedOAuthFlowsUserPoolClient set to true,
+            # this must be carried over to the template for the hosted UI to be available.
+            if c_det.get('AllowedOAuthFlowsUserPoolClient'):
+                cp['AllowedOAuthFlowsUserPoolClient'] = True
+                
             resources[clog] = {
                 'Type': 'AWS::Cognito::UserPoolClient',
                 'Properties': cp

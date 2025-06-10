@@ -1,4 +1,4 @@
-const API = "https://8s7nxwwjtl.execute-api.us-east-1.amazonaws.com/kashish11/";
+const API = "https://1bvzfbav48.execute-api.us-east-1.amazonaws.com/kashlior18/";
 const currentUserID = localStorage.getItem("userID");
 let isAdmin = localStorage.getItem("isAdmin");
 

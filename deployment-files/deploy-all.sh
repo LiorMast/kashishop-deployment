@@ -56,17 +56,7 @@ for script in "${SCRIPTS_DIR}"/*.sh; do
 done
 [[ -f "${ENABLE_CORS_SCRIPT}" ]] && chmod +x "${ENABLE_CORS_SCRIPT}" && echo "    • ${ENABLE_CORS_SCRIPT}"
 
-# # 3️⃣ Deploy Core Stack
-# echo "⛅ Deploying Core Stack: ${CORE_STACK_NAME}"
-# aws cloudformation deploy \
-#   --template-file "${TEMPLATE_DIR}/main-template.yaml" \
-#   --stack-name "${CORE_STACK_NAME}" \
-#   --parameter-overrides EnvPrefix="${ENV}" \
-#   --capabilities CAPABILITY_NAMED_IAM \
-#   --region "${REGION}"
-# echo "✅ Core Stack deployed."
-
-# 4️⃣ Deploy DynamoDB Stack
+# # 4️⃣ Deploy DynamoDB Stack
 echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
 aws cloudformation deploy \
   --template-file "${TEMPLATE_DIR}/dynamodb-template.yaml" \
@@ -103,7 +93,7 @@ aws cloudformation deploy \
 echo "✅ Cognito Stack deployed."
 
 
-# 7️⃣ Deploy Lambda functions
+# # 7️⃣ Deploy Lambda functions
 echo "🛠️ Deploying Lambdas..."
 "${LAMBDA_SCRIPT}" "${ENV}"
 echo "✅ Lambdas deployed."
@@ -153,6 +143,46 @@ BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
   --query "Stacks[0].Outputs[?contains(OutputKey, 'BucketName')].OutputValue | [0]"\
   --output text --region "${REGION}")
+
+  # 🆕 Deploy login.html to S3 as Cognito login landing page
+LOGIN_SCRIPT="${SCRIPTS_DIR}/deploy-login.sh"
+if [[ -x "$LOGIN_SCRIPT" ]]; then
+  echo "🚪 Deploying Cognito login page (login.html)..."
+
+  # Extract app client ID and redirect URI
+# Fetch the User Pool ID from CFN stack outputs (the OutputKey ending in 'UserPoolId')
+USER_POOL_ID=$(
+  aws cloudformation describe-stacks \
+    --stack-name "$COGNITO_STACK_NAME" \
+    --region     "$REGION" \
+    --query      "Stacks[0].Outputs[?ends_with(OutputKey, \`UserPoolId\`)].OutputValue" \
+    --output     text
+)
+
+# Fetch the App Client ID from CFN stack outputs (the OutputKey ending in 'UserPoolClientId')
+APP_CLIENT_ID=$(
+  aws cloudformation describe-stacks \
+    --stack-name "$COGNITO_STACK_NAME" \
+    --region     "$REGION" \
+    --query      "Stacks[0].Outputs[?ends_with(OutputKey, \`UserPoolClientId\`)].OutputValue" \
+    --output     text
+)
+
+echo "User Pool ID: $USER_POOL_ID"
+echo "App Client ID: $APP_CLIENT_ID"
+
+
+  # Redirect URI should match what was configured in the callback update script
+  REDIRECT_URI="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/main/callback.html"
+
+  "$LOGIN_SCRIPT" "$APP_CLIENT_ID" "$BUCKET_NAME" "$REGION" "$REDIRECT_URI"
+
+  echo "✅ Login page deployed to:"
+  echo "   http://${BUCKET_NAME}.s3-website.${REGION}.amazonaws.com/login.html"
+else
+  echo "⚠️ Warning: login deployment script not found at ${LOGIN_SCRIPT}"
+fi
+
 if [[ -n "${BUCKET_NAME}" ]]; then
   FRONTEND_URL="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/main/index.html"
   echo "🌐 Frontend Website URL: ${FRONTEND_URL}"
