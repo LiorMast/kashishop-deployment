@@ -66,25 +66,25 @@ done
 #   --region "${REGION}"
 # echo "✅ Core Stack deployed."
 
-# # 4️⃣ Deploy DynamoDB Stack
-# echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
-# aws cloudformation deploy \
-#   --template-file "${TEMPLATE_DIR}/dynamodb-template.yaml" \
-#   --stack-name "${DYNAMO_STACK_NAME}" \
-#   --parameter-overrides EnvPrefix="${ENV}" \
-#   --capabilities CAPABILITY_NAMED_IAM \
-#   --region "${REGION}"
-# echo "✅ DynamoDB Stack deployed."
+# 4️⃣ Deploy DynamoDB Stack
+echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
+aws cloudformation deploy \
+  --template-file "${TEMPLATE_DIR}/dynamodb-template.yaml" \
+  --stack-name "${DYNAMO_STACK_NAME}" \
+  --parameter-overrides EnvPrefix="${ENV}" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region "${REGION}"
+echo "✅ DynamoDB Stack deployed."
 
-# # 5️⃣ Deploy S3 Stack
-# echo "📦 Deploying S3 Stack: ${S3_STACK_NAME}"
-# aws cloudformation deploy \
-#   --template-file "${TEMPLATE_DIR}/s3-template.yaml" \
-#   --stack-name "${S3_STACK_NAME}" \
-#   --parameter-overrides EnvPrefix="${ENV}" \
-#   --capabilities CAPABILITY_NAMED_IAM \
-#   --region "${REGION}"
-# echo "✅ S3 Stack deployed."
+# 5️⃣ Deploy S3 Stack
+echo "📦 Deploying S3 Stack: ${S3_STACK_NAME}"
+aws cloudformation deploy \
+  --template-file "${TEMPLATE_DIR}/s3-template.yaml" \
+  --stack-name "${S3_STACK_NAME}" \
+  --parameter-overrides EnvPrefix="${ENV}" \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --region "${REGION}"
+echo "✅ S3 Stack deployed."
 
 # 6️⃣ Deploy Cognito Stack
 echo "🔐 Deploying Cognito Stack: ${COGNITO_STACK_NAME}"
