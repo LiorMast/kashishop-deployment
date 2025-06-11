@@ -3,6 +3,7 @@ import base64
 import os
 import boto3
 import sys
+import subprocess
 import random # Import the random module
 
 # This function takes an 8-digit hexadecimal color string (e.g., 'f2f8fdff')
@@ -375,12 +376,47 @@ def main():
         print("      Please check AWS permissions and ensure the User Pool and Client IDs are correct.")
     print("-" * 50)
 
+    # Construct the final URL with the correct format including env prefix in domain
+    # and proper parameter order: client_id, response_type, scope, redirect_uri
+    
+    # Construct the final URL with the correct format including env prefix in domain
+    # and proper parameter order: client_id, response_type, scope, redirect_uri
+    
+    # Print individual URL components
+    print("\nURL Components:")
+    print(f"Environment: {env}")
+    print(f"Hosted UI Domain: {hosted_ui_domain}")
+    print(f"AWS Region: {aws_region}")
+    print(f"Client ID: {app_client_id}")
+    print(f"Redirect URI: {redirect_uri}")
+    
+    final_url = f"https://{env}-{hosted_ui_domain}.auth.{aws_region}.amazoncognito.com/login?client_id={app_client_id}&response_type=code&scope=email+openid&redirect_uri={redirect_uri}"        
+    
+    
     # Prints the final Hosted UI login URL, which can be used to verify the
     # applied branding changes. The dynamically determined redirect URI is included.
     print("\nFinal Hosted UI Login URL (for testing):")
-    print(f"https://{hosted_ui_domain}.auth.{aws_region}.amazoncognito.com/login?response_type=code&client_id={app_client_id}&redirect_uri={redirect_uri}")
-    print("If the redirect URI is a placeholder, ensure your CloudFormation stack 'Kashishop2BucketName' output is available.")
+    print(final_url)
+    
+
+    return final_url
 
 # Ensures that the `main` function is called only when the script is executed directly.
 if __name__ == '__main__':
-    main()
+    # 1. Generate the final Hosted UI URL
+    login_url = main()
+
+    # 2. Now automatically run the update-login-button script against it  
+    # Assuming update_login_button.py lives next to this file
+    script_dir = os.path.dirname(__file__)
+    updater = os.path.join(script_dir, 'update-login-button.py')
+
+    try:
+        subprocess.run(
+            ['python3', updater, login_url],
+            check=True
+        )
+        print("✅ Login button updated successfully.")
+    except Exception as e:
+        print(f"⚠️ Failed to update Login button: {e}", file=sys.stderr)
+        sys.exit(1)

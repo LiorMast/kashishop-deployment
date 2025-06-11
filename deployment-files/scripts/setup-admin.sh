@@ -52,10 +52,12 @@ echo "✅ Cognito App Client ID = ${COGNITO_CLIENT_ID}"
 echo "🛠️  Enabling ADMIN_NO_SRP_AUTH and USER_PASSWORD_AUTH on App Client…"
 # The previous `cognito-client-settings.sh` already sets allowed-oauth-flows-user-pool-client
 # and other flows. This step ensures ADMIN_NO_SRP_AUTH for `admin-initiate-auth`.
+# FIX: Removed 'ADD' as it's not a valid flow for --explicit-auth-flows.
+# The parameter expects a list of flow names directly.
 aws cognito-idp update-user-pool-client \
   --user-pool-id    "$USER_POOL_ID" \
   --client-id       "$COGNITO_CLIENT_ID" \
-  --explicit-auth-flows ADD ADMIN_NO_SRP_AUTH USER_PASSWORD_AUTH \
+  --explicit-auth-flows ADMIN_NO_SRP_AUTH USER_PASSWORD_AUTH \
   >/dev/null
 echo "✅ Auth flows enabled on App Client"
 
@@ -97,53 +99,4 @@ aws cognito-idp admin-add-user-to-group \
   --group-name admin \
   >/dev/null 2>&1 || echo "ℹ️ User already in group 'admin'"
 
-# 4️⃣ Update Lambda function env for ADMIN_GROUP
-LAMBDA_NAME="${ENV}-generate-upload-url"
-echo "⚙️  Updating Lambda '${LAMBDA_NAME}' env ADMIN_GROUP=admin…"
-aws lambda update-function-configuration \
-  --function-name "$LAMBDA_NAME" \
-  --environment "Variables={ADMIN_GROUP=admin}" \
-  >/dev/null
 
-# 5️⃣ Fetch ApiUrl output for curl
-API_URL=$(aws cloudformation describe-stacks \
-  --stack-name "${API_STACK_NAME}" \
-  --region "${REGION}" \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
-  --output text)
-
-if [[ -z "$API_URL" ]]; then
-  echo "❌ Could not fetch ApiUrl from stack ${API_STACK_NAME}."
-  exit 1
-fi
-
-# 6️⃣ Authenticate admin user & fetch ACCESS_TOKEN via admin-initiate-auth
-echo "🔑 Authenticating '${ADMIN_USER}' with ADMIN_NO_SRP_AUTH to retrieve ACCESS_TOKEN…"
-AUTH_RESULT=$(aws cognito-idp admin-initiate-auth \
-  --user-pool-id "$USER_POOL_ID" \
-  --client-id    "$COGNITO_CLIENT_ID" \
-  --auth-flow    ADMIN_NO_SRP_AUTH \
-  --auth-parameters "USERNAME=${ADMIN_USER},PASSWORD=${ADMIN_PASS}" \
-  --output json)
-
-ACCESS_TOKEN=$(echo "$AUTH_RESULT" | jq -r .AuthenticationResult.AccessToken)
-
-# echo $ACCESS_TOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
-
-
-if [[ -z "$ACCESS_TOKEN" || "$ACCESS_TOKEN" == "null" ]]; then
-  echo "❌ Failed to retrieve ACCESS_TOKEN for '${ADMIN_USER}'."
-  exit 1
-fi
-echo "✅ Retrieved ACCESS_TOKEN."
-
-# 7️⃣ Print the curl command
-cat <<CMD
-
-🎉 Admin setup complete!
-
-Run this command to test the upload-endpoint:
-
-  curl -H "Authorization: Bearer ${ACCESS_TOKEN}" "${API_URL}"
-
-CMD

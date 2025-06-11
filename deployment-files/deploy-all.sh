@@ -7,19 +7,21 @@
 # Performs end-to-end deployment for Kashishop:
 #   1. Print AWS caller identity & environment info
 #   2. Ensure helper scripts are Unix format & executable
-#   3. Deploy core CloudFormation stack (skipped in this version for brevity, usually part of full setup)
-#   4. Deploy DynamoDB tables
-#   5. Deploy S3 buckets
-#   6. Deploy Cognito resources
+#   3. Deploy DynamoDB tables
+#   4. Deploy S3 buckets
+#   5. Deploy Cognito resources
+#   6. Deploy API Gateway stack
 #   7. Deploy all Lambda functions
-#   8. Sync frontend files to S3 (this is now after API update)
-#   9. Update Cognito callback URL via external script
-#  10. Configure Cognito App Client Core Settings (NEW)
-#  11. Deploy Cognito Managed Branding via Python script
-#  12. Create Admin User (NEW)
-#  13. Deploy API Gateway stack
-#  14. Enable CORS on API Gateway resources
-#  15. Print Frontend URL
+#   8. Update Cognito callback URL via external script
+#   9. Configure Cognito App Client Core Settings (NEW)
+#  10. Deploy Cognito Managed Branding via Python script
+#  11. Create Admin User (NEW)
+#  12. Enable CORS on API Gateway resources
+#  13. Update Frontend JS with new API endpoint
+#  14. Update Login Button URL (NEW)
+#  15. Sync frontend files to S3
+#  16. Deploy login.html to S3
+#  17. Print Frontend URL
 
 set -euo pipefail
 
@@ -44,6 +46,7 @@ ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
 COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure-login.py" # Path to your Python branding script
 COGNITO_APP_CLIENT_CONFIG_SCRIPT="${SCRIPTS_DIR}/cognito-client-settings.sh" # Path to your App Client configuration Bash script
 SETUP_ADMIN_SCRIPT="${SCRIPTS_DIR}/setup-admin.sh" # Path to your setup-admin.sh script
+UPDATE_LOGIN_BUTTON_SCRIPT="${SCRIPTS_DIR}/update-login-button.py" # Path to the new login button update script
 COGNITO_FULL_JSON_PATH="$(pwd)/../cognito_full.json" # Assumes cognito_full.json is in the project root
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
@@ -65,9 +68,10 @@ done
 [[ -f "${COGNITO_BRANDING_SCRIPT}" ]] && chmod +x "${COGNITO_BRANDING_SCRIPT}" && echo "    • ${COGNITO_BRANDING_SCRIPT}"
 [[ -f "${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" ]] && chmod +x "${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" && echo "    • ${COGNITO_APP_CLIENT_CONFIG_SCRIPT}"
 [[ -f "${SETUP_ADMIN_SCRIPT}" ]] && chmod +x "${SETUP_ADMIN_SCRIPT}" && echo "    • ${SETUP_ADMIN_SCRIPT}"
+[[ -f "${UPDATE_LOGIN_BUTTON_SCRIPT}" ]] && chmod +x "${UPDATE_LOGIN_BUTTON_SCRIPT}" && echo "    • ${UPDATE_LOGIN_BUTTON_SCRIPT}"
 
 
-# # 4️⃣ Deploy DynamoDB Stack
+# 3️⃣ Deploy DynamoDB Stack
 echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
 aws cloudformation deploy \
   --template-file "${TEMPLATE_DIR}/dynamodb-template.yaml" \
@@ -77,7 +81,7 @@ aws cloudformation deploy \
   --region "${REGION}"
 echo "✅ DynamoDB Stack deployed."
 
-# 5️⃣ Deploy S3 Stack
+# 4️⃣ Deploy S3 Stack
 echo "📦 Deploying S3 Stack: ${S3_STACK_NAME}"
 aws cloudformation deploy \
   --template-file "${TEMPLATE_DIR}/s3-template.yaml" \
@@ -87,7 +91,7 @@ aws cloudformation deploy \
   --region "${REGION}"
 echo "✅ S3 Stack deployed."
 
-# 6️⃣ Deploy Cognito Stack
+# 5️⃣ Deploy Cognito Stack
 echo "🔐 Deploying Cognito Stack: ${COGNITO_STACK_NAME}"
 # — ensure the template bucket exists
 if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
@@ -103,63 +107,7 @@ aws cloudformation deploy \
   --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ Cognito Stack deployed."
 
-
-# # 7️⃣ Deploy Lambda functions
-echo "🛠️ Deploying Lambdas..."
-"${LAMBDA_SCRIPT}" "${ENV}"
-echo "✅ Lambdas deployed."
-
-# 8️⃣ Sync frontend to S3
-echo "🔄 Syncing frontend files to S3 (moved earlier)..."
-"${DEPLOY_FRONTEND_SCRIPT}" "${ENV}"
-echo "✅ Frontend synced."
-
-# 9️⃣ Update Cognito callback URL
-echo "🔄 Updating Cognito callback URL via external script..."
-"${UPDATE_COGNITO_SCRIPT}" "${ENV}"
-echo "✅ Cognito callback updated."
-
-# 🔟 Configure Cognito App Client Core Settings
-echo "⚙️  Configuring Cognito App Client core settings (IDPs, OAuth, Scopes)..."
-# Pass the environment and region to the new script
-"${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" "${ENV}" "${REGION}"
-echo "✅ Cognito App Client core settings applied."
-
-# 1️⃣1️⃣ Deploy Cognito Managed Branding via Python script
-echo "🎨 Deploying Cognito Managed Branding..."
-
-# Fetch the Kashishop2BucketName output from S3 stack for branding assets
-S3_BUCKET_FOR_BRANDING=$(aws cloudformation describe-stacks \
-  --stack-name "${S3_STACK_NAME}" \
-  --query "Stacks[0].Outputs[?OutputKey=='Kashishop2BucketName'].OutputValue | [0]" \
-  --output text --region "${REGION}")
-
-if [[ -z "${S3_BUCKET_FOR_BRANDING}" || "${S3_BUCKET_FOR_BRANDING}" == "None" ]]; then
-  echo "❌ Could not find S3 bucket name 'Kashishop2BucketName' from stack ${S3_STACK_NAME}."
-  echo "   Skipping Cognito Managed Branding deployment."
-else
-  # Check if python3 is available
-  if ! command -v python3 &> /dev/null
-  then
-      echo "❌ 'python3' command not found. Skipping Cognito Managed Branding deployment."
-      echo "   Please install Python 3 to run the branding script."
-  else
-      # Run the Python script to apply branding
-      python3 "${COGNITO_BRANDING_SCRIPT}" "${COGNITO_FULL_JSON_PATH}" "${REGION}" "${S3_BUCKET_FOR_BRANDING}" "${ENV}"
-      echo "✅ Cognito Managed Branding deployment initiated."
-  fi
-fi
-
-# 1️⃣2️⃣ Create Admin User
-echo "👤 Creating Admin User and configuring associated resources..."
-# Note: setup-admin.sh expects ENV, and optionally ADMIN_USERNAME and ADMIN_PASSWORD
-# If you want to customize admin credentials, pass them here.
-# For now, using default 'admin' / 'Admin123!' as defined in setup-admin.sh
-"${SETUP_ADMIN_SCRIPT}" "${ENV}"
-echo "✅ Admin user setup completed."
-
-
-# 1️⃣3️⃣ Deploy API Gateway Stack
+# 6️⃣ Deploy API Gateway Stack (MOVED UP)
 echo "🚀 Deploying API Gateway Stack: ${API_STACK_NAME}"
 if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
   aws s3 mb "s3://${TEMPLATE_BUCKET}" --region "${REGION}"
@@ -173,66 +121,94 @@ aws cloudformation deploy \
   --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ API Gateway Stack deployed."
 
-# 1️⃣4️⃣ Enable CORS on API Gateway
+# 7️⃣ Deploy Lambda functions
+echo "🛠️ Deploying Lambdas..."
+"${LAMBDA_SCRIPT}" "${ENV}"
+echo "✅ Lambdas deployed."
+
+# 8️⃣ Update Cognito callback URL
+echo "🔄 Updating Cognito callback URL via external script..."
+"${UPDATE_COGNITO_SCRIPT}" "${ENV}"
+echo "✅ Cognito callback updated."
+
+# 9️⃣ Configure Cognito App Client Core Settings
+echo "⚙️  Configuring Cognito App Client core settings (IDPs, OAuth, Scopes)..."
+# Pass the environment and region to the new script
+"${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" "${ENV}" "${REGION}"
+echo "✅ Cognito App Client core settings applied."
+
+# 🔟 Deploy Cognito Managed Branding via Python script
+echo "🎨 Deploying Cognito Managed Branding..."
+
+# Fetch the Kashishop2BucketName output from S3 stack for branding assets
+S3_BUCKET_FOR_BRANDING=$(aws cloudformation describe-stacks \
+  --stack-name "${S3_STACK_NAME}" \
+  --query "Stacks[0].Outputs[?OutputKey=='Kashishop2BucketName'].OutputValue | [0]" \
+  --output text --region "${REGION}")
+
+LOGIN_PAGE_URL="" # Initialize variable to store the URL
+
+if [[ -z "${S3_BUCKET_FOR_BRANDING}" || "${S3_BUCKET_FOR_BRANDING}" == "None" ]]; then
+  echo "❌ Could not find S3 bucket name 'Kashishop2BucketName' from stack ${S3_STACK_NAME}."
+  echo "   Skipping Cognito Managed Branding deployment."
+else
+  # Check if python3 is available
+  if ! command -v python3 &> /dev/null
+  then
+      echo "❌ 'python3' command not found. Skipping Cognito Managed Branding deployment."
+      echo "   Please install Python 3 to run the branding script."
+  else
+      # Run the Python script to apply branding and capture its output (the login URL)
+      # We redirect stderr to stdout (2>&1) and then grep for the specific URL line
+      # from the script's output. The `tail -n 1` ensures we get the last line,
+      # and `sed` extracts just the URL.
+      python3 "${COGNITO_BRANDING_SCRIPT}" "${COGNITO_FULL_JSON_PATH}" "${REGION}" "${S3_BUCKET_FOR_BRANDING}" "${ENV}" 2>&1
+      echo "✅ Cognito Managed Branding deployment initiated."
+  fi
+fi
+
+# 1️⃣1️⃣ Create Admin User
+echo "👤 Creating Admin User and configuring associated resources..."
+# Note: setup-admin.sh expects ENV, and optionally ADMIN_USERNAME and ADMIN_PASSWORD
+# If you want to customize admin credentials, pass them here.
+# For now, using default 'admin' / 'Admin123!' as defined in setup-admin.sh
+"${SETUP_ADMIN_SCRIPT}" "${ENV}" "admin" "Admin123!"
+echo "✅ Admin user setup completed."
+
+# 1️⃣2️⃣ Enable CORS on API Gateway
 API_NAME="${ENV}Kashishop2API"
 API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
 if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
   python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
 fi
 
-#
-# Update Frontend JS with new API endpoint (re-ordered for clarity)
-#
+# 1️⃣3️⃣ Update Frontend JS with new API endpoint (MOVED UP)
 echo "🔄 Updating frontend JS with API endpoint..."
 "${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
 echo "✅ API endpoint updated in global.js."
 echo
 
-# 1️⃣5️⃣ Print Frontend URL
+# 1️⃣4️⃣ Update Login Button URL (MOVED UP)
+# echo "⬆️ Updating login button URL in global.js..."
+# if [[ -n "${LOGIN_PAGE_URL}" && -x "${UPDATE_LOGIN_BUTTON_SCRIPT}" ]]; then
+#     "${UPDATE_LOGIN_BUTTON_SCRIPT}" "${LOGIN_PAGE_URL}"
+#     echo "✅ Login button URL updated."
+# else
+#     echo "⚠️ Skipping login button URL update. Either URL not found or script not executable."
+# fi
+echo
+
+# 1️⃣5️⃣ Sync frontend files to S3 (MOVED DOWN)
+echo "🔄 Syncing frontend files to S3..."
+"${DEPLOY_FRONTEND_SCRIPT}" "${ENV}"
+echo "✅ Frontend synced."
+
+# 1️⃣7️⃣ Print Frontend URL
 # Note: BUCKET_NAME should be the same as S3_BUCKET_FOR_BRANDING
 BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
   --query "Stacks[0].Outputs[?contains(OutputKey, 'BucketName')].OutputValue | [0]"\
   --output text --region "${REGION}")
-
-  # 🆕 Deploy login.html to S3 as Cognito login landing page
-LOGIN_SCRIPT="${SCRIPTS_DIR}/deploy-login.sh"
-if [[ -x "$LOGIN_SCRIPT" ]]; then
-  echo "🚪 Deploying Cognito login page (login.html)..."
-
-  # Extract app client ID and redirect URI
-# Fetch the User Pool ID from CFN stack outputs (the OutputKey ending in 'UserPoolId')
-USER_POOL_ID=$(
-  aws cloudformation describe-stacks \
-    --stack-name "$COGNITO_STACK_NAME" \
-    --region     "$REGION" \
-    --query      "Stacks[0].Outputs[?ends_with(OutputKey, \`UserPoolId\`)].OutputValue" \
-    --output     text
-)
-
-# Fetch the App Client ID from CFN stack outputs (the OutputKey ending in 'UserPoolClientId')
-APP_CLIENT_ID=$(
-  aws cloudformation describe-stacks \
-    --stack-name "$COGNITO_STACK_NAME" \
-    --region     "$REGION" \
-    --query      "Stacks[0].Outputs[?ends_with(OutputKey, \`UserPoolClientId\`)].OutputValue" \
-    --output     text
-)
-
-echo "User Pool ID: $USER_POOL_ID"
-echo "App Client ID: $APP_CLIENT_ID"
-
-
-  # Redirect URI should match what was configured in the callback update script
-  REDIRECT_URI="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/main/callback.html"
-
-  "$LOGIN_SCRIPT" "$APP_CLIENT_ID" "$BUCKET_NAME" "$REGION" "$REDIRECT_URI"
-
-  echo "✅ Login page deployed to:"
-  echo "   http://${BUCKET_NAME}.s3-website.${REGION}.amazonaws.com/login.html"
-else
-  echo "⚠️ Warning: login deployment script not found at ${LOGIN_SCRIPT}"
-fi
 
 if [[ -n "${BUCKET_NAME}" ]]; then
   FRONTEND_URL="https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/main/index.html"
