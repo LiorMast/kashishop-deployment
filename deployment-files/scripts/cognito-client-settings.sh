@@ -96,7 +96,7 @@ aws cognito-idp update-user-pool-client \
   --allowed-o-auth-scopes "${ALLOWED_OAUTH_SCOPES[@]}" \
   --callback-urls "${REDIRECT_URI}" \
   --prevent-user-existence-errors ENABLED \
-  --region "${REGION}"
+  --region "${REGION}" >/dev/null 2>&1 # Redirect output to suppress it
 
 CLI_EXIT_CODE=$?
 set -e # Re-enable exit on error
