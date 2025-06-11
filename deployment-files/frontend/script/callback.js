@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log("userID stored in localStorage:", uuid);
 
     const isAdmin = await fetch(
-      "https://9mn02x4a2b.execute-api.us-east-1.amazonaws.com/prod/Users/isadmin?userID=" +
+      API + "/prod/Users/isadmin?userID=" +
       uuid,
       { method: "GET" }
     );

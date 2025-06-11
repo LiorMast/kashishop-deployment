@@ -41,6 +41,7 @@ SCRIPTS_DIR="$(pwd)/scripts"
 LAMBDA_SCRIPT="${SCRIPTS_DIR}/deploy-lambda.sh"
 UPDATE_COGNITO_SCRIPT="${SCRIPTS_DIR}/update-cognito-callback.sh"
 UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
+UPDATE_CALLBACK_JS_SCRIPT="${SCRIPTS_DIR}/update-callback.py"
 DEPLOY_FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
 COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure-login.py" # Path to your Python branding script
@@ -157,6 +158,11 @@ echo "🔄 Updating frontend JS with API endpoint..."
 "${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
 echo "✅ API endpoint updated in global.js."
 echo
+
+# 1️⃣3️⃣ **New**: Update callback.js with environment values
+echo "🔄 Updating callback.js with environment-specific values..."
+python3 "${UPDATE_CALLBACK_JS_SCRIPT}" --env "${ENV}" --file "./frontend/callback.js" --region "${REGION}"
+echo "✅ callback.js updated."
 
 # 🔟 Deploy Cognito Managed Branding via Python script
 echo "🎨 Deploying Cognito Managed Branding..."
