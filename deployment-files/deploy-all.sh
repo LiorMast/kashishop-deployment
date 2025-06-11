@@ -40,9 +40,9 @@ UPDATE_COGNITO_SCRIPT="${SCRIPTS_DIR}/update-cognito-callback.sh"
 UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
 DEPLOY_FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
-COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure_cognito_branding.py" # Path to your Python branding script
+COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure-login.py" # Path to your Python branding script
 COGNITO_APP_CLIENT_CONFIG_SCRIPT="${SCRIPTS_DIR}/cognito-client-settings.sh" # Path to your new Bash script
-COGNITO_FULL_JSON_PATH="$(pwd)/cognito_full.json" # Assumes cognito_full.json is in the project root
+COGNITO_FULL_JSON_PATH="$(pwd)/../cognito_full.json" # Assumes cognito_full.json is in the project root
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
 # 1️⃣ AWS Identity & Region/Account Info
