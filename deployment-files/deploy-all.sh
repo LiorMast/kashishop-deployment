@@ -131,11 +131,32 @@ echo "🔄 Updating Cognito callback URL via external script..."
 "${UPDATE_COGNITO_SCRIPT}" "${ENV}"
 echo "✅ Cognito callback updated."
 
+# 1️⃣1️⃣ Create Admin User
+echo "👤 Creating Admin User and configuring associated resources..."
+# Note: setup-admin.sh expects ENV, and optionally ADMIN_USERNAME and ADMIN_PASSWORD
+# If you want to customize admin credentials, pass them here.
+# For now, using default 'admin' / 'Admin123!' as defined in setup-admin.sh
+"${SETUP_ADMIN_SCRIPT}" "${ENV}" "admin" "Admin123!"
+echo "✅ Admin user setup completed."
+
 # 9️⃣ Configure Cognito App Client Core Settings
 echo "⚙️  Configuring Cognito App Client core settings (IDPs, OAuth, Scopes)..."
 # Pass the environment and region to the new script
 "${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" "${ENV}" "${REGION}"
 echo "✅ Cognito App Client core settings applied."
+
+# 1️⃣2️⃣ Enable CORS on API Gateway
+API_NAME="${ENV}Kashishop2API"
+API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
+if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
+  python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
+fi
+
+# 1️⃣3️⃣ Update Frontend JS with new API endpoint (MOVED UP)
+echo "🔄 Updating frontend JS with API endpoint..."
+"${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
+echo "✅ API endpoint updated in global.js."
+echo
 
 # 🔟 Deploy Cognito Managed Branding via Python script
 echo "🎨 Deploying Cognito Managed Branding..."
@@ -166,37 +187,6 @@ else
       echo "✅ Cognito Managed Branding deployment initiated."
   fi
 fi
-
-# 1️⃣1️⃣ Create Admin User
-echo "👤 Creating Admin User and configuring associated resources..."
-# Note: setup-admin.sh expects ENV, and optionally ADMIN_USERNAME and ADMIN_PASSWORD
-# If you want to customize admin credentials, pass them here.
-# For now, using default 'admin' / 'Admin123!' as defined in setup-admin.sh
-"${SETUP_ADMIN_SCRIPT}" "${ENV}" "admin" "Admin123!"
-echo "✅ Admin user setup completed."
-
-# 1️⃣2️⃣ Enable CORS on API Gateway
-API_NAME="${ENV}Kashishop2API"
-API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
-if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
-  python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
-fi
-
-# 1️⃣3️⃣ Update Frontend JS with new API endpoint (MOVED UP)
-echo "🔄 Updating frontend JS with API endpoint..."
-"${UPDATE_API_SCRIPT}" "${ENV}" "${API_ID}"
-echo "✅ API endpoint updated in global.js."
-echo
-
-# 1️⃣4️⃣ Update Login Button URL (MOVED UP)
-# echo "⬆️ Updating login button URL in global.js..."
-# if [[ -n "${LOGIN_PAGE_URL}" && -x "${UPDATE_LOGIN_BUTTON_SCRIPT}" ]]; then
-#     "${UPDATE_LOGIN_BUTTON_SCRIPT}" "${LOGIN_PAGE_URL}"
-#     echo "✅ Login button URL updated."
-# else
-#     echo "⚠️ Skipping login button URL update. Either URL not found or script not executable."
-# fi
-echo
 
 # 1️⃣5️⃣ Sync frontend files to S3 (MOVED DOWN)
 echo "🔄 Syncing frontend files to S3..."

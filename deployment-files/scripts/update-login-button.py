@@ -32,10 +32,10 @@ def main():
     # Regex to find: <button ... onclick="window.location.href='ANY_URL'" ...>Login</button>
     pattern = re.compile(
     r'(<button[^>]*onclick\s*=\s*")'
-    r'window\.location\.href=[\'"][^\'"]+[\'"];?'
+    r'window\.location\.href=\\?[\'"][^\'"]+\\?[\'"]'
     r'(".*?>\s*Login\s*</button>)',
     re.IGNORECASE
-)
+    )
 
 
     replacement = r'\1window.location.href=\'{}\''.format(args.new_url) + r'\2'

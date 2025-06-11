@@ -21,12 +21,8 @@ if [[ $# -lt 1 || $# -gt 2 ]]; then
 fi
 
 ENV="$1"
-# Set REGION: if $2 is provided, use it; otherwise, default to us-east-1
-if [[ -n "$2" ]]; then
-  REGION="$2"
-else
-  REGION="us-east-1"
-fi
+REGION="us-east-1"
+
 
 
 echo "⚙️  Configuring Cognito App Client settings for environment '${ENV}' in region '${REGION}'..."

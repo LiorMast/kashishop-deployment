@@ -66,7 +66,7 @@ function generateNavBar(isAdmin) {
     navbar.insertAdjacentHTML(
       "beforeend",
       `
-              <button class="nav-btn" onclick="window.location.href=\'https://kash12-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/login?client_id=3odgcmq622kpk2ej0rsvud1o6d&response_type=code&scope=email+openid&redirect_uri=https://kash12-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html\'">Login</button>
+              <button class="nav-btn" onclick="window.location.href=\'https://kash12-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/login?client_id=2k3i5ubbp0ed3omjjhef3u5jkj&response_type=code&scope=email+openid&redirect_uri=https://kash12-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html\'">Login</button>
           `
     );
   } else if (isAdmin) {
