@@ -3,6 +3,7 @@ import base64
 import os
 import boto3
 import sys
+import random # Import the random module
 
 # This function takes an 8-digit hexadecimal color string (e.g., 'f2f8fdff')
 # and converts it into a 6-digit CSS hexadecimal color string (e.g., '#f2f8fd').
@@ -35,8 +36,8 @@ def generate_custom_css(branding_settings):
     # Extract relevant color and style properties, providing defaults if not found
     primary_button_bg_default = branding_settings.get('components', {}).get('primaryButton', {}).get('lightMode', {}).get('defaults', {}).get('backgroundColor')
     primary_button_text_default = branding_settings.get('components', {}).get('primaryButton', {}).get('lightMode', {}).get('defaults', {}).get('textColor')
-    form_bg_color = branding_settings.get('components', {}).get('form', {}).get('lightMode', {}).get('backgroundColor')
-    input_border_color = branding_settings.get('componentClasses', {}).get('input', {}).get('lightMode', {}).get('defaults', {}).get('borderColor')
+    # form_bg_color is now randomly generated instead of extracted from JSON
+    # input_border_color = branding_settings.get('componentClasses', {}).get('input', {}).get('lightMode', {}).get('defaults', {}).get('borderColor') # This is not needed anymore
     link_text_color = branding_settings.get('componentClasses', {}).get('link', {}).get('lightMode', {}).get('defaults', {}).get('textColor')
     button_border_radius = branding_settings.get('componentClasses', {}).get('buttons', {}).get('borderRadius')
     font_family_primary = branding_settings.get('componentClasses', {}).get('body', {}).get('fontFamily')
@@ -44,9 +45,12 @@ def generate_custom_css(branding_settings):
     # Convert extracted hex colors to CSS hex format
     css_primary_button_bg = convert_color_to_css_hex(primary_button_bg_default)
     css_primary_button_text = convert_color_to_css_hex(primary_button_text_default)
-    css_form_bg_color = convert_color_to_css_hex(form_bg_color)
-    css_input_border_color = convert_color_to_css_hex(input_border_color)
+    css_input_border_color = '#cccccc' # Default to a light grey, as it's not randomly generated
     css_link_text_color = convert_color_to_css_hex(link_text_color)
+
+    # Generate a random hex color for the form background
+    # This creates a random 6-digit hexadecimal string (e.g., 'A3C1E7')
+    random_form_bg_color = '#' + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)])
 
     # Construct the CSS content using CSS variables where appropriate
     css_content = f"""
@@ -57,8 +61,8 @@ def generate_custom_css(branding_settings):
 :root {{
   --amplify-primary-button-background-color: {css_primary_button_bg if css_primary_button_bg else '#4f46e5'}; /* Default purple */
   --amplify-primary-button-color: {css_primary_button_text if css_primary_button_text else '#ffffff'}; /* Default white */
-  --amplify-form-background-color: {css_form_bg_color if css_form_bg_color else '#ffffff'}; /* Default white */
-  --amplify-input-border-color: {css_input_border_color if css_input_border_color else '#cccccc'}; /* Default light grey */
+  --amplify-form-background-color: {random_form_bg_color}; /* Randomly generated background color */
+  --amplify-input-border-color: {css_input_border_color}; /* Default light grey */
   --amplify-link-color: {css_link_text_color if css_link_text_color else '#0070c9'}; /* Default blue */
   --amplify-border-radius-large: {button_border_radius if button_border_radius else '8'}px; /* Default 8px */
   --amplify-body-font-family: {font_family_primary if font_family_primary else 'sans-serif'}; /* Default sans-serif */

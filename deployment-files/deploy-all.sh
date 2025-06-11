@@ -14,10 +14,11 @@
 #   7. Deploy all Lambda functions
 #   8. Sync frontend files to S3 (this is now after API update)
 #   9. Update Cognito callback URL via external script
-#  10. Deploy Cognito Managed Branding via Python script (NEW)
-#  11. Deploy API Gateway stack
-#  12. Enable CORS on API Gateway resources
-#  13. Print Frontend URL
+#  10. Configure Cognito App Client Core Settings (NEW)
+#  11. Deploy Cognito Managed Branding via Python script
+#  12. Deploy API Gateway stack
+#  13. Enable CORS on API Gateway resources
+#  14. Print Frontend URL
 
 set -euo pipefail
 
@@ -39,8 +40,9 @@ UPDATE_COGNITO_SCRIPT="${SCRIPTS_DIR}/update-cognito-callback.sh"
 UPDATE_API_SCRIPT="${SCRIPTS_DIR}/update-api-endpoint.sh"
 DEPLOY_FRONTEND_SCRIPT="${SCRIPTS_DIR}/deploy-frontend.sh"
 ENABLE_CORS_SCRIPT="${SCRIPTS_DIR}/enable-cors-apigw.py"
-COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure-login.py" # Path to your Python branding script
-COGNITO_FULL_JSON_PATH="$(pwd)/../cognito_full.json" # Assumes cognito_full.json is in the project root
+COGNITO_BRANDING_SCRIPT="${SCRIPTS_DIR}/configure_cognito_branding.py" # Path to your Python branding script
+COGNITO_APP_CLIENT_CONFIG_SCRIPT="${SCRIPTS_DIR}/cognito-client-settings.sh" # Path to your new Bash script
+COGNITO_FULL_JSON_PATH="$(pwd)/cognito_full.json" # Assumes cognito_full.json is in the project root
 TEMPLATE_BUCKET="${ENV}-kashishop-templates"
 
 # 1️⃣ AWS Identity & Region/Account Info
@@ -59,6 +61,8 @@ for script in "${SCRIPTS_DIR}"/*.sh; do
 done
 [[ -f "${ENABLE_CORS_SCRIPT}" ]] && chmod +x "${ENABLE_CORS_SCRIPT}" && echo "    • ${ENABLE_CORS_SCRIPT}"
 [[ -f "${COGNITO_BRANDING_SCRIPT}" ]] && chmod +x "${COGNITO_BRANDING_SCRIPT}" && echo "    • ${COGNITO_BRANDING_SCRIPT}"
+[[ -f "${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" ]] && chmod +x "${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" && echo "    • ${COGNITO_APP_CLIENT_CONFIG_SCRIPT}"
+
 
 # # 4️⃣ Deploy DynamoDB Stack
 echo "📦 Deploying DynamoDB Stack: ${DYNAMO_STACK_NAME}"
@@ -112,7 +116,13 @@ echo "🔄 Updating Cognito callback URL via external script..."
 "${UPDATE_COGNITO_SCRIPT}" "${ENV}"
 echo "✅ Cognito callback updated."
 
-# 🔟 Deploy Cognito Managed Branding via Python script
+# 🔟 Configure Cognito App Client Core Settings
+echo "⚙️  Configuring Cognito App Client core settings (IDPs, OAuth, Scopes)..."
+# Pass the environment and region to the new script
+"${COGNITO_APP_CLIENT_CONFIG_SCRIPT}" "${ENV}" "${REGION}"
+echo "✅ Cognito App Client core settings applied."
+
+# 1️⃣1️⃣ Deploy Cognito Managed Branding via Python script
 echo "🎨 Deploying Cognito Managed Branding..."
 
 # Fetch the Kashishop2BucketName output from S3 stack for branding assets
@@ -138,7 +148,7 @@ else
 fi
 
 
-# 11️⃣ Deploy API Gateway Stack
+# 1️⃣2️⃣ Deploy API Gateway Stack
 echo "🚀 Deploying API Gateway Stack: ${API_STACK_NAME}"
 if ! aws s3api head-bucket --bucket "${TEMPLATE_BUCKET}" 2>/dev/null; then
   aws s3 mb "s3://${TEMPLATE_BUCKET}" --region "${REGION}"
@@ -152,7 +162,7 @@ aws cloudformation deploy \
   --s3-bucket "${TEMPLATE_BUCKET}"
 echo "✅ API Gateway Stack deployed."
 
-# 12️⃣ Enable CORS on API Gateway
+# 1️⃣3️⃣ Enable CORS on API Gateway
 API_NAME="${ENV}Kashishop2API"
 API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
 if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
@@ -167,7 +177,7 @@ echo "🔄 Updating frontend JS with API endpoint..."
 echo "✅ API endpoint updated in global.js."
 echo
 
-# 13️⃣ Print Frontend URL
+# 1️⃣4️⃣ Print Frontend URL
 # Note: BUCKET_NAME should be the same as S3_BUCKET_FOR_BRANDING
 BUCKET_NAME=$(aws cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
