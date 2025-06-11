@@ -1,4 +1,4 @@
-const API = "https://btmwcwq1ig.execute-api.us-east-1.amazonaws.com/kash12/";
+const API = "https://wwxcvq0qm6.execute-api.us-east-1.amazonaws.com/kash14/";
 const currentUserID = localStorage.getItem("userID");
 let isAdmin = localStorage.getItem("isAdmin");
 
@@ -66,7 +66,7 @@ function generateNavBar(isAdmin) {
     navbar.insertAdjacentHTML(
       "beforeend",
       `
-              <button class="nav-btn" onclick="window.location.href=\'https://kash12-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/login?client_id=2k3i5ubbp0ed3omjjhef3u5jkj&response_type=code&scope=email+openid&redirect_uri=https://kash12-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html\'">Login</button>
+              <button class="nav-btn" onclick="window.location.href=\'https://kash14-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/login?client_id=2tvqi6cpet0hubl5cremal20e9&response_type=code&scope=email+openid&redirect_uri=https://kash14-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html\'">Login</button>
           `
     );
   } else if (isAdmin) {

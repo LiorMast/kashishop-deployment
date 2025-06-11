@@ -123,9 +123,9 @@ aws cloudformation deploy \
 echo "✅ API Gateway Stack deployed."
 
 # 7️⃣ Deploy Lambda functions
-echo "🛠️ Deploying Lambdas..."
-"${LAMBDA_SCRIPT}" "${ENV}"
-echo "✅ Lambdas deployed."
+# echo "🛠️ Deploying Lambdas..."
+# "${LAMBDA_SCRIPT}" "${ENV}"
+# echo "✅ Lambdas deployed."
 
 # 8️⃣ Update Cognito callback URL
 echo "🔄 Updating Cognito callback URL via external script..."
@@ -149,9 +149,9 @@ echo "✅ Cognito App Client core settings applied."
 # 1️⃣2️⃣ Enable CORS on API Gateway
 API_NAME="${ENV}Kashishop2API"
 API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
-if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
-  python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
-fi
+# if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
+#   python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
+# fi
 
 # 1️⃣3️⃣ Update Frontend JS with new API endpoint (MOVED UP)
 echo "🔄 Updating frontend JS with API endpoint..."
@@ -161,7 +161,7 @@ echo
 
 # 1️⃣3️⃣ **New**: Update callback.js with environment values
 echo "🔄 Updating callback.js with environment-specific values..."
-python3 "${UPDATE_CALLBACK_JS_SCRIPT}" --env "${ENV}" --file "./frontend/callback.js" --region "${REGION}"
+python3 "${UPDATE_CALLBACK_JS_SCRIPT}" --env "${ENV}" --region "${REGION}"
 echo "✅ callback.js updated."
 
 # 🔟 Deploy Cognito Managed Branding via Python script

@@ -9,12 +9,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 
-  const clientId = "2k3i5ubbp0ed3omjjhef3u5jkj";
-  const clientSecret = "avhrr3604g80h9t5mtmq0ol0a4u7n6ndq1pda65q8m1uk0djoe1";
-  const redirectUri =
-    "https://kashishop2.s3.us-east-1.amazonaws.com/main/callback.html";
-  const tokenEndpoint =
-    "https://us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/oauth2/token";
+  const clientId = "2tvqi6cpet0hubl5cremal20e9";
+  const clientSecret = "None";
+  const redirectUri = "https://kash14-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html";
+  const tokenEndpoint = "https://kash14-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/oauth2/token";
+
+  const API = "https://wwxcvq0qm6.execute-api.us-east-1.amazonaws.com/kash14";
 
 
   const basicAuth = btoa(`${clientId}:${clientSecret}`);
