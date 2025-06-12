@@ -1,113 +1,104 @@
 #!/usr/bin/env bash
 #
 # configure-cognito-app-client.sh
+# Enhanced to ensure the App Client has a secret and uses Basic Auth for token exchange
+# Robustly finds client even if CF outputs stale, suppresses extraneous output.
 #
 # Usage: ./configure-cognito-app-client.sh <ENV> [REGION]
-#
-# Configures the essential settings for a Cognito User Pool App Client
-# via AWS CLI, including Identity Providers, OAuth Grant Types,
-# OpenID Connect Scopes, and dynamically determined Callback URLs.
-# This script should be run AFTER the Cognito User Pool and S3 bucket
-# have been deployed (e.g., after the deploy-all.sh script's initial phases).
 
 set -euo pipefail
 
-# Check for required arguments
 if [[ $# -lt 1 || $# -gt 2 ]]; then
   echo "❌ Usage: $0 <ENV> [REGION]"
-  echo "  <ENV>: Your deployment environment (e.g., 'dev', 'prod')"
-  echo "  [REGION]: (Optional) The AWS region where your resources are deployed (e.g., 'us-east-1'). Defaults to us-east-1 if not provided."
   exit 1
 fi
 
 ENV="$1"
-REGION="us-east-1"
+REGION="${2:-us-east-1}"
+export AWS_PAGER=""
 
-
-
-echo "⚙️  Configuring Cognito App Client settings for environment '${ENV}' in region '${REGION}'..."
-echo "----------------------------------------------------------------------"
-
-# Define CloudFormation stack names based on the environment
 COGNITO_STACK_NAME="${ENV}-kashishop-cognito"
 S3_STACK_NAME="${ENV}-kashishop-s3"
+CLIENT_NAME="${ENV}-kashishop-client"
 
-# --- Step 1: Fetch User Pool ID and App Client ID ---
-echo "Retrieving User Pool ID and App Client ID from CloudFormation stack: ${COGNITO_STACK_NAME}..."
-USER_POOL_ID=$(aws cloudformation describe-stacks \
+# 1️⃣ Fetch User Pool ID
+USER_POOL_ID=$(aws --no-cli-pager cloudformation describe-stacks \
   --stack-name "${COGNITO_STACK_NAME}" \
-  --query "Stacks[0].Outputs[?ends_with(OutputKey, 'UserPoolId')].OutputValue | [0]" \
-  --output text --region "${REGION}" 2>/dev/null || echo "NOT_FOUND")
+  --query "Stacks[0].Outputs[?ends_with(OutputKey,'UserPoolId')].OutputValue | [0]" \
+  --output text --region "${REGION}")
 
-APP_CLIENT_ID=$(aws cloudformation describe-stacks \
+# 2️⃣ Attempt to fetch App Client ID from CF outputs
+APP_CLIENT_ID=$(aws --no-cli-pager cloudformation describe-stacks \
   --stack-name "${COGNITO_STACK_NAME}" \
-  --query "Stacks[0].Outputs[?ends_with(OutputKey, 'UserPoolClientId')].OutputValue | [0]" \
-  --output text --region "${REGION}" 2>/dev/null || echo "NOT_FOUND")
+  --query "Stacks[0].Outputs[?ends_with(OutputKey,'UserPoolClientId')].OutputValue | [0]" \
+  --output text --region "${REGION}")
 
-if [[ "${USER_POOL_ID}" == "NOT_FOUND" || -z "${USER_POOL_ID}" ]]; then
-  echo "❌ Error: Could not find User Pool ID in stack '${COGNITO_STACK_NAME}'. Is the stack deployed?"
-  exit 1
+# 3️⃣ Fallback to list-user-pool-clients if needed
+if [[ -z "${APP_CLIENT_ID}" || "${APP_CLIENT_ID}" == "None" ]]; then
+  echo "⚠️ CF outputs missing App Client ID; falling back to list-user-pool-clients..."
+  APP_CLIENT_ID=$(aws --no-cli-pager cognito-idp list-user-pool-clients \
+    --user-pool-id "${USER_POOL_ID}" \
+    --max-results 60 \
+    --query "UserPoolClients[?contains(ClientName, '${CLIENT_NAME}')].ClientId | [0]" \
+    --output text --region "${REGION}")
 fi
 
-if [[ "${APP_CLIENT_ID}" == "NOT_FOUND" || -z "${APP_CLIENT_ID}" ]]; then
-  echo "❌ Error: Could not find App Client ID in stack '${COGNITO_STACK_NAME}'. Is the stack deployed?"
-  exit 1
-fi
-
-echo "   ✓ User Pool ID:    ${USER_POOL_ID}"
-echo "   ✓ App Client ID:   ${APP_CLIENT_ID}"
-echo "----------------------------------------------------------------------"
-
-# --- Step 2: Dynamically determine Callback URI ---
-echo "Determining Redirect URI from S3 CloudFormation stack: ${S3_STACK_NAME}..."
-SITE_BUCKET=$(aws cloudformation describe-stacks \
+# 4️⃣ Determine Redirect URI
+SITE_BUCKET=$(aws --no-cli-pager cloudformation describe-stacks \
   --stack-name "${S3_STACK_NAME}" \
   --query "Stacks[0].Outputs[?OutputKey=='Kashishop2BucketName'].OutputValue | [0]" \
-  --output text --region "${REGION}" 2>/dev/null || echo "NOT_FOUND")
-
-if [[ "${SITE_BUCKET}" == "NOT_FOUND" || -z "${SITE_BUCKET}" ]]; then
-  echo "❌ Error: Could not find 'Kashishop2BucketName' output in stack '${S3_STACK_NAME}'. Is the S3 stack deployed?"
-  exit 1
-fi
-
+  --output text --region "${REGION}")
 REDIRECT_URI="https://${SITE_BUCKET}.s3.${REGION}.amazonaws.com/main/callback.html"
-echo "   ✓ Redirect URI:    ${REDIRECT_URI}"
-echo "----------------------------------------------------------------------"
 
-## --- Step 3: Apply App Client Settings using aws cognito-idp update-user-pool-client ---
-echo "Applying App Client settings (Identity Providers, OAuth Flows, Scopes)..."
-
-SUPPORTED_IDENTITY_PROVIDERS=("COGNITO")
-ALLOWED_OAUTH_FLOWS=("code")
-ALLOWED_OAUTH_SCOPES=("openid" "email")
-
+# 5️⃣ Check if client secret exists
 set +e
-
-aws cognito-idp update-user-pool-client \
+CLIENT_SECRET=$(aws --no-cli-pager cognito-idp describe-user-pool-client \
   --user-pool-id "${USER_POOL_ID}" \
   --client-id "${APP_CLIENT_ID}" \
-  --supported-identity-providers "${SUPPORTED_IDENTITY_PROVIDERS[@]}" \
-  --allowed-o-auth-flows "${ALLOWED_OAUTH_FLOWS[@]}" \
-  --allowed-o-auth-flows-user-pool-client \
-  --allowed-o-auth-scopes "${ALLOWED_OAUTH_SCOPES[@]}" \
-  --callback-urls "${REDIRECT_URI}" \
-  --prevent-user-existence-errors ENABLED \
-  --region "${REGION}" >/dev/null 2>&1 # Redirect output to suppress it
+  --region "${REGION}" \
+  --query "UserPoolClient.ClientSecret" \
+  --output text 2>/dev/null)
+DESCRIBE_STATUS=$?
+set -e
 
-CLI_EXIT_CODE=$?
-set -e # Re-enable exit on error
+# 6️⃣ Recreate client if no secret or error
+if [[ ${DESCRIBE_STATUS} -ne 0 || -z "${CLIENT_SECRET}" || "${CLIENT_SECRET}" == "None" ]]; then
+  echo "⚠️ No valid client secret; recreating App Client with secret..."
+  aws --no-cli-pager cognito-idp delete-user-pool-client \
+    --user-pool-id "${USER_POOL_ID}" \
+    --client-id "${APP_CLIENT_ID}" \
+    --region "${REGION}" > /dev/null 2>&1
 
-if [[ ${CLI_EXIT_CODE} -eq 0 ]]; then
-  echo "   ✅ Cognito App Client settings updated successfully!"
+  CREATE_JSON=$(aws --no-cli-pager cognito-idp create-user-pool-client \
+    --user-pool-id "${USER_POOL_ID}" \
+    --client-name "${CLIENT_NAME}" \
+    --generate-secret \
+    --allowed-o-auth-flows code \
+    --allowed-o-auth-flows-user-pool-client \
+    --allowed-oauth-scopes openid email \
+    --callback-urls "${REDIRECT_URI}" \
+    --prevent-user-existence-errors ENABLED \
+    --region "${REGION}")
+
+  APP_CLIENT_ID=$(echo "$CREATE_JSON" | jq -r '.UserPoolClient.ClientId')
+  CLIENT_SECRET=$(echo "$CREATE_JSON" | jq -r '.UserPoolClient.ClientSecret')
+  echo "   ✓ Recreated client: ID=${APP_CLIENT_ID}, Secret=${CLIENT_SECRET}"
 else
-  echo "   ❌ Error updating Cognito App Client settings. AWS CLI command failed with exit code: ${CLI_EXIT_CODE}"
-  # The output of the AWS command will now be visible directly in the console
-  echo "      Please check the error messages above for details (from AWS CLI output)."
-  echo "      Ensure your AWS credentials have sufficient permissions (cognito-idp:UpdateUserPoolClient)."
-  exit 1
+  echo "   ✓ Existing client secret: ${CLIENT_SECRET:0:4}..."
 fi
 
 echo "----------------------------------------------------------------------"
-echo "🎉 Cognito App Client configuration completed."
-echo "You can verify the settings in the AWS Cognito Console."
-echo "----------------------------------------------------------------------"
+
+# 7️⃣ Update OAuth settings on client silently
+aws --no-cli-pager cognito-idp update-user-pool-client \
+  --user-pool-id "${USER_POOL_ID}" \
+  --client-id "${APP_CLIENT_ID}" \
+  --supported-identity-providers COGNITO \
+  --allowed-o-auth-flows code \
+  --allowed-o-auth-flows-user-pool-client \
+  --allowed-o-auth-scopes openid email \
+  --callback-urls "${REDIRECT_URI}" \
+  --prevent-user-existence-errors ENABLED \
+  --region "${REGION}" > /dev/null 2>&1
+
+echo "✅ App Client configured with secret (ID=${APP_CLIENT_ID})."
