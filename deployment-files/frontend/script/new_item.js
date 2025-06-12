@@ -115,6 +115,7 @@ newItemForm.addEventListener("submit", async (event) => {
     });
 
     if (!response.ok) {
+      console.log(response);
       throw new Error("Network response was not ok");
       createPopupError("Failed to upload image. Please try again.");
       restoreButton(submitBtn);

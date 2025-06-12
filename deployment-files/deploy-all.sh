@@ -123,9 +123,9 @@ aws cloudformation deploy \
 echo "✅ API Gateway Stack deployed."
 
 # 7️⃣ Deploy Lambda functions
-# echo "🛠️ Deploying Lambdas..."
-# "${LAMBDA_SCRIPT}" "${ENV}"
-# echo "✅ Lambdas deployed."
+echo "🛠️ Deploying Lambdas..."
+"${LAMBDA_SCRIPT}" "${ENV}"
+echo "✅ Lambdas deployed."
 
 # 8️⃣ Update Cognito callback URL
 echo "🔄 Updating Cognito callback URL via external script..."
@@ -137,8 +137,8 @@ echo "👤 Creating Admin User and configuring associated resources..."
 # Note: setup-admin.sh expects ENV, and optionally ADMIN_USERNAME and ADMIN_PASSWORD
 # If you want to customize admin credentials, pass them here.
 # For now, using default 'admin' / 'Admin123!' as defined in setup-admin.sh
-# "${SETUP_ADMIN_SCRIPT}" "${ENV}" "admin" "Admin123!"
-# echo "✅ Admin user setup completed."
+"${SETUP_ADMIN_SCRIPT}" "${ENV}" "admin" "Admin123!"
+echo "✅ Admin user setup completed."
 
 # 9️⃣ Configure Cognito App Client Core Settings
 echo "⚙️  Configuring Cognito App Client core settings (IDPs, OAuth, Scopes)..."
@@ -149,7 +149,9 @@ echo "✅ Cognito App Client core settings applied."
 # 1️⃣2️⃣ Enable CORS on API Gateway
 API_NAME="${ENV}Kashishop2API"
 API_ID=$(aws apigateway get-rest-apis --query "items[?name=='${API_NAME}'].id" --output text --region "${REGION}")
-# if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then 
+if [[ -n "${API_ID}" && -f "${ENABLE_CORS_SCRIPT}" ]]; then
+  python3 "${ENABLE_CORS_SCRIPT}" --api-id "${API_ID}" --region "${REGION}" --stage "${ENV}"
+fi
 
 # 1️⃣3️⃣ Update Frontend JS with new API endpoint (MOVED UP)
 echo "🔄 Updating frontend JS with API endpoint..."

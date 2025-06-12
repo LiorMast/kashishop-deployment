@@ -197,6 +197,7 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       ClientName: Kashishop2
+      GenerateSecret: true
       RefreshTokenValidity: 5
       AccessTokenValidity: 60
       IdTokenValidity: 60

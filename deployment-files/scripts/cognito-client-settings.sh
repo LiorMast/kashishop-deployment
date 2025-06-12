@@ -75,7 +75,7 @@ if [[ ${DESCRIBE_STATUS} -ne 0 || -z "${CLIENT_SECRET}" || "${CLIENT_SECRET}" ==
     --generate-secret \
     --allowed-o-auth-flows code \
     --allowed-o-auth-flows-user-pool-client \
-    --allowed-oauth-scopes openid email \
+    --allowed-o-auth-scopes openid email \
     --callback-urls "${REDIRECT_URI}" \
     --prevent-user-existence-errors ENABLED \
     --region "${REGION}")

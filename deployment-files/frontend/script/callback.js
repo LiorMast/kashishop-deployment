@@ -9,12 +9,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
 
-  const clientId = "2tvqi6cpet0hubl5cremal20e9";
-  const clientSecret = "None";
-  const redirectUri = "https://kash14-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html";
-  const tokenEndpoint = "https://kash14-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/oauth2/token";
+  const clientId = "7vvhrl18402pe4rdo5ehlighr8";
+  const clientSecret = "1snpgboa6lbdm5vh4qpe54sbul2h38pqctuvglolsa8blt9ab95";
+  const redirectUri = "https://kashish2-kashishop2.s3.us-east-1.amazonaws.com/main/callback.html";
+  const tokenEndpoint = "https://kashish2-us-east-1l8fw4esc3.auth.us-east-1.amazoncognito.com/oauth2/token";
 
-  const API = "https://wwxcvq0qm6.execute-api.us-east-1.amazonaws.com/kash14";
+  const API = "https://tuj21wu7l1.execute-api.us-east-1.amazonaws.com/kashish2";
 
 
   const basicAuth = btoa(`${clientId}:${clientSecret}`);
@@ -40,8 +40,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       throw new Error(`Token exchange failed: ${response.statusText}`);
     }
 
-    const tokens = await response.json();
-    console.log("Tokens:", tokens);
+    const text = await response.text();
+    console.log("Raw token response:", text);
+
+    let tokens;
+    try {
+      tokens = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse token JSON:", e);
+      return;
+    }
 
 
     const idToken = tokens.id_token;
@@ -71,5 +79,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.location.href = "index.html";
   } catch (error) {
     console.error("Error exchanging authorization code for tokens:", error);
+    window.location.href = "index.html";
   }
 });
